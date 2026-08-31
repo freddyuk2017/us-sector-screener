@@ -3,7 +3,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>港股行業輪動</title><style>
-:root{--bg:#0a0c0e;--panel:#12151a;--panel2:#0d1013;--line:#232830;--up:#f0334b;--dn:#26a769;
+:root{--bg:#0a0c0e;--panel:#12151a;--panel2:#0d1013;--line:#232830;--up:#26a769;--dn:#f0334b;
 --txt:#d7dde6;--dim:#7a8494;--faint:#59626f;--cy:#22d3ee;--am:#f0a030;--pp:#b78cf7}
 *{box-sizing:border-box;margin:0}
 html{background:var(--bg)}
@@ -16,8 +16,7 @@ background-size:28px 28px;min-height:100vh}
 .wrap{max-width:1180px;margin:0 auto;padding:28px 22px 60px}
 a{color:var(--cy)}
 /* ---- header ---- */
-.hd{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:20px;
-padding-bottom:20px;border-bottom:1px solid var(--line)}
+.hd{padding-bottom:20px;border-bottom:1px solid var(--line)}
 .brand{font-size:12px;letter-spacing:.24em;color:var(--dim)}
 .brand b{color:var(--cy);font-weight:600}
 .clock{font-family:Consolas,Menlo,monospace;font-size:76px;line-height:1;letter-spacing:.10em;
@@ -25,14 +24,7 @@ color:#e8ecf2;text-shadow:0 0 24px rgba(215,221,230,.30),0 0 5px rgba(215,221,23
 margin-top:12px;font-variant-numeric:tabular-nums}
 .cdate{font-family:Consolas,Menlo,monospace;font-size:13px;color:var(--dim);
 letter-spacing:.16em;margin-top:10px}
-.mkt{text-align:right}
-.mkt-chip{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--line);
-background:var(--panel);padding:9px 16px;border-radius:4px;font-size:13px;letter-spacing:.10em}
-.dot{width:9px;height:9px;border-radius:50%;background:#555d6a;flex:none}
-.dot.on{background:var(--dn);box-shadow:0 0 9px var(--dn)}
-.mkt-sub{font-size:11px;color:var(--faint);margin-top:9px;
-font-family:Consolas,Menlo,monospace;letter-spacing:.08em}
-.meta-line{margin:14px 0 0;font-size:12px;color:var(--dim);letter-spacing:.05em}
+.meta-line{margin:10px 0 0;font-size:12px;color:var(--dim);letter-spacing:.05em}
 .meta-line.stale{color:var(--am);text-shadow:0 0 10px rgba(240,160,48,.35)}
 /* ---- tabs ---- */
 .tabs{display:flex;gap:10px;margin:20px 0 4px}
@@ -45,13 +37,6 @@ letter-spacing:.12em;border-radius:4px}
 font-family:Consolas,Menlo,monospace}
 .sec i{display:inline-block;width:9px;height:9px;background:var(--cy);margin-right:10px}
 .sec b{color:#e8ecf2;font-weight:600}
-/* ---- KPI ---- */
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
-.kpi{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px 22px}
-.kpi .v{font-family:Consolas,Menlo,monospace;font-size:46px;line-height:1;color:#e8ecf2}
-.kpi .v.warn{color:var(--cy)}
-.kpi .v.ok{color:var(--up)}
-.kpi .l{font-size:12px;color:var(--dim);letter-spacing:.14em;margin-top:10px}
 /* ---- badges ---- */
 .badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:3px;
 letter-spacing:.08em;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
@@ -110,18 +95,15 @@ text-align:left;padding:8px;border-bottom:1px solid var(--line)}
 .dt .r{text-align:right}
 .dt tr:last-child td{border-bottom:none}
 .up{color:var(--up)}.dn{color:var(--dn)}.flat{color:var(--faint)}.w{color:#e8ecf2}
+.cy{color:var(--cy)}
 /* ---- watchlist ---- */
 .wcard{background:var(--panel);border:1px solid var(--line);border-radius:6px;
 padding:18px 20px;margin-bottom:14px}
-.wcard.brk{border-color:var(--up);box-shadow:0 0 14px rgba(240,51,75,.15)}
+.wcard.brk{border-color:var(--up);box-shadow:0 0 14px rgba(38,167,105,.15)}
 .wl-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .wl-name{font-size:16px;font-weight:600}
-.range{display:flex;align-items:center;gap:12px;margin-top:14px}
-.rlbl{font-size:11px;color:var(--dim);white-space:nowrap;font-family:Consolas,Menlo,monospace}
-.track{position:relative;flex:1;height:10px;border-radius:99px;min-width:80px;
-background:linear-gradient(to right,var(--dn) 0%,#3d4a42 50%,var(--up) 100%)}
-.dotp{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;background:#e8ecf2;
-transform:translate(-50%,-50%);box-shadow:0 0 0 3px rgba(232,236,242,.25)}
+.gauge{margin-top:14px;width:100%;max-width:250px}
+.gauge svg{display:block;width:100%;height:auto}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .chip{border:1px solid var(--line);background:var(--panel2);border-radius:4px;
 padding:6px 12px;font-size:12px}
@@ -135,27 +117,19 @@ border-top:1px solid var(--line);padding-top:18px;letter-spacing:.03em}
 @media (max-width:900px){
 .wrap{padding:18px 14px 50px}
 .clock{font-size:46px}
-.kpis{grid-template-columns:1fr}
 .tile{flex-basis:150px}
-.mkt{text-align:left}
+.gauge{max-width:220px}
 .dt{font-size:12px}
 }
 </style></head><body>
 <div class="wrap">
 <header class="hd">
-  <div>
-    <div class="brand"><b>&#9632;</b> BOARD PULSE // 港股行業輪動</div>
-    <div class="clock" id="clock">--:--:--</div>
-    <div class="cdate" id="cdate"></div>
-  </div>
-  <div class="mkt">
-    <div class="mkt-chip"><span class="dot" id="mdot"></span><span class="num" id="mstat">--</span></div>
-    <div class="mkt-sub" id="mtime"></div>
-  </div>
+  <div class="brand"><b>&#9632;</b> BOARD PULSE // 港股行業輪動</div>
+  <div class="clock" id="clock">--:--:--</div>
+  <div class="cdate" id="cdate"></div>
+  <div class="meta-line" id="metaline">數據截至 2026-08-31 收市 · 更新 2026-08-31 19:04:19</div>
 </header>
-<div class="meta-line" id="metaline">數據截至 2026-08-31 收市 · 更新 2026-08-31 19:04:19</div>
 <div class="tabs"><a href="index.html" class="">美股 US</a><a href="hk.html" class="on">港股 HK</a></div>
-<div class="kpis" id="kpis"></div>
 <div id="sigsec"></div>
 <div class="sec"><i></i><b>HEAT WALL</b> // 板塊熱力圖 · 12 行業（HSCI 市值加權）（撳格仔睇明細）</div>
 <div class="tm" id="tm"></div>
@@ -190,7 +164,7 @@ function cls(v){return v==null?"flat":v>0?"up":v<0?"dn":"flat"}
 function badge(t,c){return '<span class="badge '+(c||"")+'">'+t+"</span>"}
 function corrHtml(c){
   if(c==null)return '<span class="flat num">—</span>';
-  var cl=c>=0.7?"up":c>=0.4?"w":c>=0?"flat":"dn";
+  var cl=c>=0.7?"cy":c>=0.4?"w":"flat";
   return '<span class="'+cl+' num">'+c.toFixed(2)+"</span>";
 }
 function capFmt(c){
@@ -204,22 +178,13 @@ function capFmt(c){
 function priceFmt(v){if(v==null)return"—";return v>=1000?v.toFixed(0):v>=100?v.toFixed(1):v.toFixed(2)}
 function cnName(en){return CN[en]?" · "+CN[en]:""}
 
-/* ---- 時鐘 + 市場狀態（client-side 實時計） ---- */
+/* ---- 時鐘（client-side 實時跳） ---- */
 var WK=["日","一","二","三","四","五","六"];
 function tick(){
   var now=new Date();
   var p2=function(n){return String(n).padStart(2,"0")};
   $("clock").textContent=p2(now.getHours())+":"+p2(now.getMinutes())+":"+p2(now.getSeconds());
   $("cdate").textContent=now.getFullYear()+"-"+p2(now.getMonth()+1)+"-"+p2(now.getDate())+" · 星期"+WK[now.getDay()];
-  var tz=ISHK?"Asia/Hong_Kong":"America/New_York";
-  var parts=new Intl.DateTimeFormat("en-GB",{timeZone:tz,weekday:"short",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(now);
-  var wd="",hh=0,mm=0;
-  parts.forEach(function(p){if(p.type==="weekday")wd=p.value;if(p.type==="hour")hh=parseInt(p.value,10);if(p.type==="minute")mm=parseInt(p.value,10)});
-  var mins=hh*60+mm;
-  var open=["Mon","Tue","Wed","Thu","Fri"].indexOf(wd)>=0&&mins>=570&&mins<960;
-  $("mdot").className="dot"+(open?" on":"");
-  $("mstat").textContent=(ISHK?"HKEX · 香港":"NYSE · 紐約")+"  "+(open?"OPEN":"CLOSED");
-  $("mtime").textContent=(ISHK?"HKT":"US/Eastern")+" "+p2(hh)+":"+p2(mm)+" · 周一至五 09:30–16:00";
 }
 tick();setInterval(tick,1000);
 
@@ -229,17 +194,11 @@ tick();setInterval(tick,1000);
   if(!isNaN(t)&&(Date.now()-t.getTime())/864e5>4)$("metaline").classList.add("stale");
 })();
 
-/* ---- KPI ---- */
 var wl=D.watchlist||[];
 var rot=D.rotation||{};
 var rotAll=(rot.sectors||[]).concat(rot.tech||[]);
-var turnN=rotAll.filter(function(s){return s.status==="TURNING"}).length;
-var breakN=wl.filter(function(e){return e.break}).length+(D.breakPicks||[]).length;
-var watchN=wl.filter(function(e){return e.daysInRange}).length;
-$("kpis").innerHTML=[["弱勢監察中",watchN,""],["⚡ 轉強訊號",turnN,"warn"],["有力突破",breakN,"ok"]]
-.map(function(k){return '<div class="kpi"><div class="v num '+k[2]+'">'+k[1]+'</div><div class="l">'+k[0]+"</div></div>"}).join("");
 
-/* ---- ⚡ 轉強訊號（置頂警示，KPI 之後） ---- */
+/* ---- ⚡ 轉強訊號（置頂警示） ---- */
 if(rotAll.length){
   var h='<div class="sec"><i></i><b>ROTATION ALERT</b> // ⚡ 轉強訊號</div>';
   rotAll.forEach(function(s){
@@ -264,11 +223,11 @@ if(rotAll.length){
   $("sigsec").innerHTML=h;
 }
 
-/* ---- 板塊熱力圖 ---- */
+/* ---- 板塊熱力圖（綠升紅跌） ---- */
 function heatBg(r,maxAbs){
   if(r==null||isNaN(r))return"rgba(35,40,48,.35)";
   var a=0.10+0.45*Math.min(1,Math.abs(r)/maxAbs);
-  return r>=0?"rgba(240,51,75,"+a.toFixed(3)+")":"rgba(38,167,105,"+a.toFixed(3)+")";
+  return r>=0?"rgba(38,167,105,"+a.toFixed(3)+")":"rgba(240,51,75,"+a.toFixed(3)+")";
 }
 var secs=(D.sectors||[]).slice().sort(function(a,b){return b.strength-a.strength});
 var maxAbs=Math.max.apply(null,[0.005].concat(secs.map(function(s){return Math.abs(s.ret1M||0)})));
@@ -434,12 +393,12 @@ function drawChart(){
       ctx.fillStyle="#59626f";ctx.fillText(rows[i][0].slice(5,7)+"月",x(i)-8,H-padB+9);
     }
   }
-  /* 成交量柱（紅升綠跌） */
+  /* 成交量柱（綠升紅跌） */
   var vmx=0;rows.forEach(function(r){if(r[2]>vmx)vmx=r[2]});if(!vmx)vmx=1;
   var bw=Math.max(1,iw/rows.length*0.55);
   rows.forEach(function(r,i){
     var up=i>0?r[1]>=rows[i-1][1]:true;
-    ctx.fillStyle=up?"rgba(240,51,75,.55)":"rgba(38,167,105,.55)";
+    ctx.fillStyle=up?"rgba(38,167,105,.6)":"rgba(240,51,75,.6)";
     var vh=volH*((r[2]||0)/vmx);
     ctx.fillRect(x(i)-bw/2,H-padB-vh,bw,vh);
   });
@@ -465,13 +424,39 @@ function drawChart(){
 }
 window.addEventListener("resize",function(){if(curKey&&curStocks.length)drawChart()});
 
+/* ---- range 位置 gauge：半圓 dash 弧 + 白色指針 + 大數字 ---- */
+function gaugeSvg(pos,bottom,top){
+  var cx=120,cy=118,r0=76,r1=92,N=44;
+  var s='<svg viewBox="0 0 240 160" xmlns="http://www.w3.org/2000/svg">';
+  for(var i=0;i<N;i++){
+    var f=i/(N-1),th=Math.PI*(1-f);
+    var x1=(cx+r0*Math.cos(th)).toFixed(1),y1=(cy-r0*Math.sin(th)).toFixed(1);
+    var x2=(cx+r1*Math.cos(th)).toFixed(1),y2=(cy-r1*Math.sin(th)).toFixed(1);
+    var lit=pos!=null&&f<=pos+1e-9;
+    s+='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2
+      +'" stroke="'+(lit?"#22d3ee":"#262c34")+'" stroke-width="4" stroke-linecap="round"/>';
+  }
+  if(pos!=null){
+    var a=Math.PI*(1-pos);
+    var nx=(cx+62*Math.cos(a)).toFixed(1),ny=(cy-62*Math.sin(a)).toFixed(1);
+    s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="#e8ecf2" stroke-width="2.5"/>'
+      +'<rect x="'+(cx-3)+'" y="'+(cy-3)+'" width="6" height="6" fill="#e8ecf2"/>';
+  }
+  s+='<text x="12" y="134" fill="#59626f" font-size="10" font-family="Consolas,Menlo,monospace">底</text>'
+    +'<text x="228" y="134" fill="#59626f" font-size="10" text-anchor="end" font-family="Consolas,Menlo,monospace">頂</text>'
+    +'<text x="86" y="152" text-anchor="end" fill="#e8ecf2" font-size="32" font-weight="700" font-family="Consolas,Menlo,monospace">'
+    +(pos==null?"—":Math.round(pos*100)+"%")+'</text>'
+    +'<text x="96" y="152" fill="#7a8494" font-size="11" font-family="Consolas,Menlo,monospace">底 '+bottom+' · 頂 '+top+'</text>'
+    +'</svg>';
+  return s;
+}
+
 /* ---- 弱勢監察 ---- */
 (function(){
   var h="";
   if(!wl.length)h='<div class="panel"><div class="empty">今日冇板塊喺弱勢 range 入面</div></div>';
   wl.forEach(function(e){
     var brk=!!e.break;
-    var posPct=e.pos==null?null:Math.round(e.pos*100);
     h+='<div class="wcard'+(brk?" brk":"")+'"><div class="wl-head">'
       +'<span class="wl-name">'+esc(e.name)+cnName(e.name)+"</span>"
       +'<span class="num" style="color:var(--dim)">'+esc(e.key)+"</span>"
@@ -488,10 +473,7 @@ window.addEventListener("resize",function(){if(curKey&&curStocks.length)drawChar
         +'，升 <span class="up num">'+pct(b.ret)+"</span> 穿 range 頂 "+priceFmt(b.brokeAbove)
         +(b.dayPos!=null?'，收喺全日頂部 <span class="num">'+Math.round(b.dayPos*100)+"%</span>":"")+"</div>";
     }
-    h+='<div class="range"><span class="rlbl">底 '+priceFmt(e.rangeBottom)+"</span>"
-      +'<div class="track"><div class="dotp" style="left:'+(posPct==null?50:Math.max(2,Math.min(98,posPct)))+'%"></div></div>'
-      +'<span class="rlbl">頂 '+priceFmt(e.rangeTop)+"</span>"
-      +(posPct==null?"":'<span class="rlbl num w">'+posPct+"%</span>")+"</div>";
+    h+='<div class="gauge">'+gaugeSvg(e.pos,priceFmt(e.rangeBottom),priceFmt(e.rangeTop))+"</div>";
     var leaders=e.leaders||[];
     if(leaders.length){
       h+='<div class="lead-lbl">領頭（20日跑贏）</div><div class="chips">'+leaders.map(function(l){
