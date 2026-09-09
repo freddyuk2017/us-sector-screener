@@ -923,7 +923,7 @@ if(ISG)(function(){
   $("brksec").innerHTML=h;
 })();
 
-/* ---- 重點板塊候選股（最強第1 + 最弱4板塊 · 各5隻，按板塊分組；gold 頁由 gold block 處理） ---- */
+/* ---- 重點板塊候選股（US：全部 11 板塊各 5 隻；HK：最強第1 + 最弱4行業；gold 頁由 gold block 處理） ---- */
 if(!ISG)(function(){
   var picks=D.topPicks||[];
   if(!picks.length){$("top").innerHTML='<div class="empty">冇數據</div>';return}
@@ -933,10 +933,16 @@ if(!ISG)(function(){
     if(!gmap[k]){gmap[k]={key:k,rank:p.sectorRank||0,name:p.sector||"",items:[]};groups.push(gmap[k])}
     gmap[k].items.push(p);
   });
+  /* 組數 = 板塊總數 → 全板塊模式：中間名次唔標「弱勢」，最尾標「最弱」；
+     否則（HK 最強1+最弱4）照舊全部非第1標「弱勢」。 */
+  var allMode=groups.length>0&&groups.length===(D.sectors||[]).length;
+  var maxRk=0;groups.forEach(function(g){if(g.rank>maxRk)maxRk=g.rank});
   var h="";
   groups.forEach(function(g){
     var rk=g.rank;
-    var rb=rk===1?badge("#1 最強","b-up"):badge("#"+rk+" 弱勢","b-dn");
+    var rb=rk===1?badge("#1 最強","b-up")
+      :(allMode?(maxRk>1&&rk===maxRk?badge("#"+rk+" 最弱","b-dn"):badge("#"+rk,""))
+               :badge("#"+rk+" 弱勢","b-dn"));
     h+='<div class="tpg-head"><span class="num w"><b>'+esc(g.key)+"</b></span><span>"
       +esc(g.name)+cnName(g.name)+"</span>"+rb+"</div>"
       +'<div class="twrap"><table class="dt"><tr><th>代號</th><th>名</th><th class="r">收市</th>'
