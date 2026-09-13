@@ -995,20 +995,34 @@ function gaugeSvg(pos,bottom,top,N){
   return s;
 }
 
-/* ---- TOP TIER 扇形能量表（v1.4）：半圓 48 格刻度弧，能量由左填到 留意值/100；
-   霓光琥珀弧（低分暗、高分光）+ 暗灰背景弧 + 白色指針 + 內同心虛線弧 layering；
-   留意值數字鑲喺弧心偏下。純 SVG，無動畫依賴，static frame 完整。 ---- */
+/* ---- TOP TIER 扇形能量表（v1.5：三階段紅黃綠轉速錶式） ----
+   刻度顏色由固定位置決定：弧左端 0 分位 = 霓紅 #FF4655 → 弧中 50 分位 = 霓黃 #FFC531
+   → 弧右端 100 分位 = 霓綠 #2DF2A1，中間連續漸變；成條光譜永遠紅→黃→綠咁排。
+   填充規則照舊：刻度填到 留意值/100 為止，未填保持暗灰。
+   指針 + 中央分數 + glow 用「而家階段」色：<34 紅 / 34-66 黃 / ≥67 綠。
+   純 SVG，無動畫依賴，static frame 完整。 ---- */
+var TT_STAGE=[[255,70,85],[255,197,49],[45,242,161]];
+function ttLerp(a,b,t){
+  return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];
+}
+function ttArcC(f){ /* 弧上位置 0..1 → 光譜色 */
+  return f<0.5?ttLerp(TT_STAGE[0],TT_STAGE[1],f*2):ttLerp(TT_STAGE[1],TT_STAGE[2],(f-0.5)*2);
+}
+function ttStageC(score){ /* 而家階段色 */
+  return score<34?TT_STAGE[0]:score<67?TT_STAGE[1]:TT_STAGE[2];
+}
+function ttRgb(c,a){return "rgba("+c[0]+","+c[1]+","+c[2]+","+(a==null?1:a)+")"}
 function ttGauge(score){
   var f=Math.max(0,Math.min(1,(score||0)/100));
   var cx=100,cy=94,r0=64,r1=78,N=48;
-  var alpha=(0.45+0.55*f).toFixed(2);
+  var st=ttStageC(score||0);
   var s='<svg viewBox="0 0 200 132" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">';
   /* 同心內弧虛線（掃描線 layering，暗） */
   s+='<path d="M '+(cx-50)+' '+cy+' A 50 50 0 0 1 '+(cx+50)+' '+cy
     +'" fill="none" stroke="rgba(240,160,48,.16)" stroke-width="1" stroke-dasharray="2 5"/>';
   s+='<path d="M '+(cx-42)+' '+cy+' A 42 42 0 0 1 '+(cx+42)+' '+cy
     +'" fill="none" stroke="rgba(240,160,48,.08)" stroke-width="1"/>';
-  /* 背景刻度弧（暗灰；每第 6 格長少少） */
+  /* 刻度弧：未填 = 暗灰；已填 = 位置光譜色（每第 6 格長少少） */
   var i,f2,th,x1,y1,x2,y2,lit,rb;
   var litLines="";
   for(i=0;i<N;i++){
@@ -1019,21 +1033,21 @@ function ttGauge(score){
     lit=f2<=f+1e-9;
     var ln='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2
       +'" stroke-width="'+(i%6===0?4:3)+'" stroke-linecap="round"';
-    if(lit)litLines+=ln+' stroke="rgba(240,160,48,'+alpha+')"/>';
+    if(lit)litLines+=ln+' stroke="'+ttRgb(ttArcC(f2),0.95)+'"/>';
     else s+=ln+' stroke="#262c34"/>';
   }
-  /* 能量弧（霓光 glow） */
-  if(litLines)s+='<g style="filter:drop-shadow(0 0 3px rgba(240,160,48,.85))">'+litLines+"</g>";
-  /* 指針（白，指住數值） */
+  /* 能量弧霓光 glow（階段色） */
+  if(litLines)s+='<g style="filter:drop-shadow(0 0 3px '+ttRgb(st,0.85)+')">'+litLines+"</g>";
+  /* 指針（階段色，指住數值） */
   var a=Math.PI*(1-f),nx=(cx+54*Math.cos(a)).toFixed(1),ny=(cy-54*Math.sin(a)).toFixed(1);
-  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="#e8ecf2" stroke-width="2.5"/>'
-    +'<rect x="'+(cx-3)+'" y="'+(cy-3)+'" width="6" height="6" fill="#e8ecf2"/>';
+  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="'+ttRgb(st)+'" stroke-width="2.5"/>'
+    +'<rect x="'+(cx-3)+'" y="'+(cy-3)+'" width="6" height="6" fill="'+ttRgb(st)+'"/>';
   /* 端點 0 / 100 細標 */
   s+='<text x="10" y="100" fill="#59626f" font-size="8" font-family="Consolas,Menlo,monospace">0</text>'
     +'<text x="190" y="100" fill="#59626f" font-size="8" text-anchor="end" font-family="Consolas,Menlo,monospace">100</text>';
-  /* 留意值數字（鑲喺弧心偏下，跟能量亮度） */
-  s+='<text x="100" y="122" text-anchor="middle" fill="rgba(240,176,64,'+alpha+')" font-size="26" font-weight="700"'
-    +' font-family="Consolas,Menlo,monospace" style="filter:drop-shadow(0 0 5px rgba(240,160,48,'+(0.3+0.4*f).toFixed(2)+'))">'
+  /* 留意值數字（鑲喺弧心偏下，階段色 + glow） */
+  s+='<text x="100" y="122" text-anchor="middle" fill="'+ttRgb(st)+'" font-size="26" font-weight="700"'
+    +' font-family="Consolas,Menlo,monospace" style="filter:drop-shadow(0 0 5px '+ttRgb(st,0.55)+')">'
     +Math.round(score||0)+"</text>"
     +'<text x="100" y="131" text-anchor="middle" fill="#59626f" font-size="7.5" letter-spacing="1.5" font-family="Consolas,Menlo,monospace">留意值 WATCH</text>';
   return s+"</svg>";
