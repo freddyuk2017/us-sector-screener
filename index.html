@@ -92,25 +92,25 @@ box-shadow:0 0 16px rgba(38,167,105,.22),inset 0 0 16px rgba(38,167,105,.05)}
 .panel.fr-cy{border-color:var(--cy);box-shadow:0 0 16px rgba(34,211,238,.20)}
 .panel.fr-up{border-color:var(--up);box-shadow:0 0 16px rgba(38,167,105,.20)}
 .panel.fr-am{border-color:var(--am);box-shadow:0 0 12px rgba(240,160,48,.16)}
-/* ---- TOP TIER 正方形格仔牆（v1.7：桌面 4 格一行放大 · 名+能量表+第N日章） ---- */
+/* ---- 反彈雷達正方形格仔牆（v1.8：框色跟分數光譜 · 光度/glow 跟分數，JS inline 驅動） ---- */
 .ttgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
-.ttile{position:relative;aspect-ratio:1/1;border:1px solid var(--am);border-radius:6px;
-background:var(--panel);box-shadow:0 0 12px rgba(240,160,48,.14);cursor:pointer;
+.ttile{position:relative;aspect-ratio:1/1;border:1.5px solid var(--line);border-radius:6px;
+background:var(--panel);cursor:pointer;
 display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px 14px 10px;
-transition:border-color .15s,box-shadow .15s}
-.ttile:hover{border-color:#f0c060;box-shadow:0 0 16px rgba(240,160,48,.24)}
+transition:border-color .15s,box-shadow .15s,filter .15s}
+.ttile:hover{filter:brightness(1.18)}
 .tt-nm{font-size:11.5px;color:var(--dim);text-align:center;line-height:1.5;
 white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .tt-g{width:86%;margin-top:auto}
 .tt-day{position:absolute;top:9px;right:9px}
 .scorenote{margin-top:12px;font-size:11px;color:var(--faint);letter-spacing:.04em;
 line-height:1.8;font-family:Consolas,Menlo,monospace}
-/* ---- 強勢板塊 list（v1.7：SMA50 之上 · 行式 + 270° 電青速度錶） ---- */
+/* ---- 強勢板塊 list（v1.8：SMA50 之上 · 行式 + 270° 火焰橙速度錶） ---- */
 .strrow{display:flex;align-items:center;gap:14px;background:var(--panel);
 border:1px solid var(--line);border-radius:6px;padding:10px 16px;margin-bottom:8px;
 cursor:pointer;transition:border-color .15s}
-.strrow:hover{border-color:rgba(34,211,238,.5);box-shadow:0 0 12px rgba(34,211,238,.12)}
-.str-rk{font-family:Consolas,Menlo,monospace;font-size:15px;color:var(--cy);
+.strrow:hover{border-color:rgba(255,140,26,.5);box-shadow:0 0 12px rgba(255,140,26,.12)}
+.str-rk{font-family:Consolas,Menlo,monospace;font-size:15px;color:#FF8C1A;
 font-weight:700;flex:0 0 36px}
 .str-nm{font-size:14px;font-weight:600}
 .str-code{font-family:Consolas,Menlo,monospace;font-size:12px;color:var(--faint)}
@@ -199,7 +199,7 @@ padding-top:14px;margin-top:14px}
 <div class="tabs"><a href="index.html" class="on">美股 US</a><a href="hk.html" class="">港股 HK</a><a href="gold.html" class="">硬資產 HARD</a></div>
 <div id="golddash"></div>
 <div id="sigsec"></div>
-<div class="sec" id="sec_wl"><i></i><b>TOP TIER</b> // 觀察板塊</div>
+<div class="sec" id="sec_wl"><i></i><b>反彈雷達</b> // 低位蓄勢 · 值得留意</div>
 <div id="wl"></div>
 <div class="sec" id="sec_str"><i></i><b>強勢板塊</b> // SMA50之上</div>
 <div id="strong"></div>
@@ -234,6 +234,14 @@ function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"
 function pct(v,dp){if(v==null||isNaN(v))return"—";dp=dp==null?1:dp;return(v>0?"+":"")+(v*100).toFixed(dp)+"%"}
 function cls(v){return v==null?"flat":v>0?"up":v<0?"dn":"flat"}
 function badge(t,c){return '<span class="badge '+(c||"")+'">'+t+"</span>"}
+/* v1.8：火焰橙光譜（強勢錶用）。必須喺呢度賦值 —— 第一個 caller（強勢 list renderer）
+   早過錶函數定義段執行；ttLerp 係 function declaration 有 hoist，呢度用得。 */
+var STR_SPEC=[[255,77,0],[255,140,26],[255,194,28]]; /* 深橙 #FF4D00 → 亮橙 #FF8C1A → 焰尖 #FFC21C */
+function strArcC(f){ /* 弧上位置 0..1 → 火焰色（3 stops） */
+  f=Math.max(0,Math.min(1,f));
+  var seg=Math.min(1,Math.floor(f*2)),t=f*2-seg;
+  return ttLerp(STR_SPEC[seg],STR_SPEC[seg+1],t);
+}
 function corrHtml(c){
   if(c==null)return '<span class="flat num">—</span>';
   var cl=c>=0.7?"cy":c>=0.4?"w":"flat";
@@ -1095,18 +1103,21 @@ function ttGauge(score){
   return s+"</svg>";
 }
 
-/* ---- 強勢板塊速度碼表（v1.7：270° 汽車錶款，電青 cyan 系） ----
-   同 TOP TIER 嘅 180° 扇形明顯唔同款：刻度繞 270°（缺口喺正下方），
-   由左下（0）經頂部填到 強度/100；指針 + 錶心分數 + glow 全 cyan。
-   用喺強勢板塊 list 行尾同 TECH SPLIT 格仔。 ---- */
+/* ---- 強勢板塊速度碼表（v1.8：270° 汽車錶款，火焰橙系） ----
+   同反彈雷達嘅 180° 扇形明顯唔同款：刻度繞 270°（缺口喺正下方），
+   由左下（0）經頂部填到 強度/100；已填刻度用弧上固定位置火焰漸變：
+   左深橙 #FF4D00 → 中亮橙 #FF8C1A → 右焰尖 #FFC21C；
+   指針 + 錶心分數 + glow 統一亮橙（全部行同色，唔跟分數變光暗）。
+   用喺強勢板塊 list 行尾同 TECH SPLIT 格仔。
+   （STR_SPEC / strArcC 定義喺檔案頂部工具區 —— 強勢 renderer 早過呢段執行，
+     var 賦值唔 hoist，放呢度會 runtime undefined。） ---- */
 function strGauge(score){
   var f=Math.max(0,Math.min(1,(score||0)/100));
   var cx=60,cy=62,r0=40,r1=50,N=40;
-  var CY=[34,211,238];
   var th=function(g){return Math.PI*1.25-Math.PI*1.5*g};  /* 左下 225° → 頂 → 右下 -45° */
   var s='<svg viewBox="0 0 120 112" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">';
   /* 內圈虛線 layering */
-  s+='<circle cx="'+cx+'" cy="'+cy+'" r="30" fill="none" stroke="rgba(34,211,238,.10)"'
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="30" fill="none" stroke="rgba(255,140,26,.10)"'
     +' stroke-width="1" stroke-dasharray="2 5"/>';
   var i,th2,x1,y1,x2,y2,lit,rb;
   var litLines="";
@@ -1118,26 +1129,27 @@ function strGauge(score){
     lit=f2<=f+1e-9;
     var ln='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2
       +'" stroke-width="'+(i%5===0?3.5:2.5)+'" stroke-linecap="round"';
-    if(lit)litLines+=ln+' stroke="rgba(34,211,238,.95)"/>';
+    if(lit)litLines+=ln+' stroke="'+ttRgb(strArcC(f2),0.95)+'"/>';
     else s+=ln+' stroke="#262c34"/>';
   }
-  if(litLines)s+='<g style="filter:drop-shadow(0 0 3px rgba(34,211,238,.85))">'+litLines+"</g>";
-  /* 指針 */
+  if(litLines)s+='<g style="filter:drop-shadow(0 0 3px rgba(255,140,26,.85))">'+litLines+"</g>";
+  /* 指針（亮橙） */
   var a=th(f),nx=(cx+34*Math.cos(a)).toFixed(1),ny=(cy-34*Math.sin(a)).toFixed(1);
-  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="rgba(34,211,238,.95)" stroke-width="2.2"/>'
-    +'<circle cx="'+cx+'" cy="'+cy+'" r="3" fill="#22d3ee"/>';
-  /* 錶心強度分數 */
-  s+='<text x="'+cx+'" y="'+(cy+22)+'" text-anchor="middle" fill="#22d3ee" font-size="19" font-weight="700"'
-    +' font-family="Consolas,Menlo,monospace" style="filter:drop-shadow(0 0 4px rgba(34,211,238,.6))">'
+  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="rgba(255,140,26,.95)" stroke-width="2.2"/>'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="3" fill="#FF8C1A"/>';
+  /* 錶心強度分數（亮橙） */
+  s+='<text x="'+cx+'" y="'+(cy+22)+'" text-anchor="middle" fill="#FF8C1A" font-size="19" font-weight="700"'
+    +' font-family="Consolas,Menlo,monospace" style="filter:drop-shadow(0 0 4px rgba(255,140,26,.6))">'
     +Math.round(score||0)+"</text>";
   return s+"</svg>";
 }
 
-/* ---- TOP TIER 觀察板塊（v1.3：收市 < 當日 SMA50 · 正方形金框格仔牆） ----
+/* ---- 反彈雷達觀察板塊（v1.8：收市 < 當日 SMA50 · 格框跟分數光譜色+光度） ----
    留意值（純顯示層計，唔掂引擎）= 60×貼線 + 40×困日：
      貼線 = 1 - min(|距SMA50%| / 8, 1)  —— 貼住條線越高分，跌遠 8% 歸零
      困日 = min(連續收低於SMA50日數 / 20, 1) —— 困得耐越高分，20 日計滿
    每格淨係顯示：板塊名 · 代號 · 扇形能量表（留意值鑲喺表入面）· 右上角「第N日」章。
+   格框色 = 分數光譜位置色（同指針同色），框透明度 + glow 跟分數線性：越高分越閃。
    冇 below 板塊就收埋成個區；頁尾 scorenote 寫公式 + 每格分數明細。 */
 function watchScore(key){
   var t=turnOf(key);
@@ -1156,7 +1168,7 @@ function watchScore(key){
     if(turnState(TECH_TURNS[k])==="below")below.push({key:k,t:TECH_TURNS[k],tech:true});
   });
   var sec=$("sec_wl"),note=$("scorenote");
-  var NOTE_TOP="TOP TIER 觀察板塊 = 收市跌穿咗當日 SMA50 · 等緊轉強訊號 · 留意值高→低排";
+  var NOTE_TOP="反彈雷達 = 收市跌穿咗當日 SMA50 · 等緊轉強訊號 · 留意值高→低排";
   var NOTE_FORMULA="留意值 = 60×貼線（距 SMA50 8% 歸零）+ 40×困日（連續收低於 SMA50 · 滿 20 日計滿）";
   var NOTE_STR="強勢板塊 = 收市企喺 SMA50 上 · 按舊強度分（0-100）高→低排";
   var scored=[];
@@ -1170,14 +1182,20 @@ function watchScore(key){
     return;
   }
   if(sec){
-    sec.innerHTML='<i></i><b>TOP TIER</b> // 觀察板塊 · '+scored.length+' 個';
+    sec.innerHTML='<i></i><b>反彈雷達</b> // 低位蓄勢 · 值得留意 · '+scored.length+' 個';
     sec.style.display="";
   }
   var h='<div class="ttgrid">',bits=[];
   scored.forEach(function(r){
     var nm=NAME[r.key]||r.key,ws=r.ws;
-    h+='<div class="ttile" data-key="'+esc(r.key)+'">'
-      +'<div class="tt-day">'+badge((ws.capped?"≥":"第")+ws.days+(ws.capped?"":" 日"),"b-am")+"</div>"
+    /* v1.8：框色 = 分數光譜位置色；框透明度 + glow 尺寸/透明度跟分數線性（越高分越閃） */
+    var f=Math.max(0,Math.min(1,ws.score/100)),c=ttArcC(f);
+    var ba=(0.10+0.55*f).toFixed(2),ga=(0.06+0.50*f).toFixed(2),gs=Math.round(6+16*f);
+    h+='<div class="ttile" data-key="'+esc(r.key)+'" style="border-color:'+ttRgb(c,ba)
+      +';box-shadow:0 0 '+gs+'px '+ttRgb(c,ga)+'">'
+      +'<div class="tt-day"><span class="badge" style="border-color:'+ttRgb(c,0.40)
+      +';color:'+ttRgb(c,0.85)+';background:'+ttRgb(c,0.07)+'">'
+      +(ws.capped?"≥":"第")+ws.days+(ws.capped?"":" 日")+"</span></div>"
       +'<div class="tt-nm">'+esc(nm)+cnName(nm)+(r.tech?' <span style="color:var(--pp)">· 細分</span>':"")+"</div>"
       +'<div class="tt-g">'+ttGauge(ws.score)+"</div>"
       +"</div>";
