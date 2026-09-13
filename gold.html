@@ -92,17 +92,24 @@ box-shadow:0 0 16px rgba(38,167,105,.22),inset 0 0 16px rgba(38,167,105,.05)}
 .panel.fr-cy{border-color:var(--cy);box-shadow:0 0 16px rgba(34,211,238,.20)}
 .panel.fr-up{border-color:var(--up);box-shadow:0 0 16px rgba(38,167,105,.20)}
 .panel.fr-am{border-color:var(--am);box-shadow:0 0 12px rgba(240,160,48,.16)}
-/* ---- 反彈雷達正方形格仔牆（v1.8：框色跟分數光譜 · 光度/glow 跟分數，JS inline 驅動） ---- */
-.ttgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+/* ---- 反彈雷達 bento 格仔牆（v1.9：#1 英雄格佔兩格闊（最高分配最光框）· 標準格 ~200px
+   · 板塊名貼錶頂冇中間真空；v1.8 框色跟分數光譜 · 光度/glow 跟分數，JS inline 驅動） ---- */
+.ttgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
 .ttile{position:relative;aspect-ratio:1/1;border:1.5px solid var(--line);border-radius:6px;
 background:var(--panel);cursor:pointer;
-display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px 14px 10px;
+display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 10px 12px;
 transition:border-color .15s,box-shadow .15s,filter .15s}
 .ttile:hover{filter:brightness(1.18)}
+.ttile.hero{grid-column:span 2;aspect-ratio:auto}
 .tt-nm{font-size:11.5px;color:var(--dim);text-align:center;line-height:1.5;
-white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.tt-g{width:86%;margin-top:auto}
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-bottom:2px}
+.tt-g{width:86%}
+.hero .tt-g{width:46%;min-width:170px}
 .tt-day{position:absolute;top:9px;right:9px}
+.tt-dist{font-family:Consolas,Menlo,monospace;font-size:12px;color:var(--dim);margin-top:4px}
+.tt-top3{margin-top:8px;font-size:10.5px;color:var(--faint);line-height:1.75;
+text-align:center;letter-spacing:.02em}
+.tt-top3 b{color:var(--dim);font-family:Consolas,Menlo,monospace}
 .scorenote{margin-top:12px;font-size:11px;color:var(--faint);letter-spacing:.04em;
 line-height:1.8;font-family:Consolas,Menlo,monospace}
 /* ---- 強勢板塊 list（v1.8：SMA50 之上 · 行式 + 270° 火焰橙速度錶） ---- */
@@ -179,7 +186,6 @@ border-top:1px solid var(--line);padding-top:18px;letter-spacing:.03em}
 .clock{font-size:46px}
 .tile{flex-basis:150px}
 .wl-grid{grid-template-columns:repeat(2,1fr)}
-.ttgrid{grid-template-columns:repeat(2,1fr)}
 .str-g{flex-basis:72px}
 .ch-grid{grid-template-columns:1fr}
 .ch-col{padding-right:0}
@@ -187,7 +193,12 @@ border-top:1px solid var(--line);padding-top:18px;letter-spacing:.03em}
 padding-top:14px;margin-top:14px}
 .dt{font-size:12px}
 }
-@media (max-width:599px){.wl-grid{grid-template-columns:1fr}.ttgrid{grid-template-columns:repeat(2,1fr)}.dt .nm{max-width:90px}.strrow{flex-wrap:wrap}.str-ret{margin-left:0}}
+@media (max-width:700px){
+.ttgrid{grid-template-columns:repeat(2,1fr);gap:10px}
+.ttile.hero{grid-column:1/-1}
+.hero .tt-g{width:56%}
+}
+@media (max-width:599px){.wl-grid{grid-template-columns:1fr}.dt .nm{max-width:90px}.strrow{flex-wrap:wrap}.str-ret{margin-left:0}}
 </style></head><body>
 <div class="wrap">
 <header class="hd">
@@ -203,7 +214,6 @@ padding-top:14px;margin-top:14px}
 <div id="wl"></div>
 <div class="sec" id="sec_str"><i></i><b>強勢板塊</b> // SMA50之上</div>
 <div id="strong"></div>
-<div id="techrow"></div>
 <div id="detail"></div>
 <div id="brksec"></div>
 <div class="sec" id="sec_top"><i></i><b>重點板塊候選股</b> // 全部 12 行業 · 各 5 隻（評分：市值70/成交30）</div>
@@ -227,7 +237,14 @@ var CN={"Energy":"能源","Communication Services":"通訊服務","Materials":"�
 "Financials":"金融","Consumer Discretionary":"非必需消費","Consumer Staples":"必需消費",
 "Real Estate":"房地產","Industrials":"工業","Utilities":"公用事業",
 "Properties & Construction":"地產建築","Consumer Goods":"消費品","Conglomerates":"綜合企業",
-"Transportation":"交通運輸","Telecommunications":"電訊","Commerce & Trade":"商貿"};
+"Transportation":"交通運輸","Telecommunications":"電訊","Commerce & Trade":"商貿",
+"Hardware":"硬件","Software":"軟件","Semiconductors":"半導體","Internet":"互聯網"};
+/* v1.9：XLK 退役 —— 科技四子（SEMI/SOFT/HW/INT）升做正式板塊取代佢；
+   雷達 / 強勢 list / Top5 表 / 訊號卡都唔再出 XLK，淨係 drill-down 代理圖標註會見到。 */
+var RETIRED={XLK:1};
+/* 四子代號表（Top5 表 badge / 強勢行 badge 用）；label 嚟自 D.techGroups。 */
+var TECHCAT={};
+(DATA.techGroups||[]).forEach(function(g){if(g.cat)TECHCAT[g.cat]=1});
 
 /* ---- helpers ---- */
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
@@ -303,6 +320,10 @@ function turnState(t){
 }
 /* ---- 線圖數列 → 收市線 / SMA50 / 連續收低於 SMA50 日數（顯示層計數，唔掂引擎） ---- */
 function closesOf(key){
+  /* v1.9：科技四子用自組 EW 指數收市線（D.techEwCharts，board 層按引擎砌法重建，
+     錨點對準 techTurns.close）；SPDR / HK 照舊用 indexCharts 收市線（四子嗰啲係代理 ETF 線，唔啱計留意值）。 */
+  var ew=(D.techEwCharts||{})[key];
+  if(ew&&ew.length)return ew.slice();
   var rows=(D.indexCharts||{})[key]||[],out=[];
   rows.forEach(function(r){if(r&&r[4]!=null)out.push([r[0],r[4]])});
   return out;
@@ -420,7 +441,7 @@ function btcDrill(tk){
 if(ISG)(function(){
   /* 收埋美股/港股專用區（brksec 保留：GLD 突破事件會喺度出）
      v1.2：GLD RANGE 區已由 TOP TIER 取代（呢度唔再改 sec_wl 標題） */
-  ["sec_tm","tm","techrow"].forEach(function(id){var e=$(id);if(e)e.style.display="none"});
+  ["sec_tm","tm"].forEach(function(id){var e=$(id);if(e)e.style.display="none"});
   var tops=$("sec_top");
   if(tops)tops.innerHTML='<i></i><b>GOLD MINERS</b> // 金礦股排名（corr20 對 GLD）· 頭 5 名 = 候選股（撳行睇圖）';
 
@@ -640,6 +661,7 @@ function sigCard(r){
 (function(){
   var turning=[],holding=[];
   Object.keys(SECT_TURNS).forEach(function(k){
+    if(RETIRED[k])return;   /* v1.9：XLK 退役 */
     var st=turnState(SECT_TURNS[k]);
     if(st==="turning")turning.push({key:k,t:SECT_TURNS[k],tech:false});
     else if(st==="holding")holding.push({key:k,t:SECT_TURNS[k],tech:false});
@@ -667,18 +689,23 @@ function sigCard(r){
   });
 })();
 
-/* ---- 強勢板塊 list（v1.7：取代 HEAT WALL） ----
+/* ---- 強勢板塊 list（v1.9：10 SPDR + 4 科技細分混排 · XLK 退役） ----
    淨係擺「企喺 SMA50 上」嘅中性板塊，按舊強度分（0-100）高→低；
-   每行：排名 + 板塊名 + ticker + 20日%（綠升紅跌）+ 270° 電青速度錶；撳行開 drill-down。
-   跌穿咗嘅上咗 TOP TIER，TURNING/HOLDING 上咗訊號卡區。 */
+   四子同 SPDR 同權混排（強度尺差異見頁尾註釋），行尾火焰橙錶；
+   每行：排名 + 板塊名 + ticker + 20日%（綠升紅跌）+ 270° 火焰速度錶；撳行開 drill-down。
+   跌穿咗嘅上咗反彈雷達，TURNING/HOLDING 上咗訊號卡區。 */
 function heatBg(r,maxAbs){
   if(r==null||isNaN(r))return"rgba(35,40,48,.35)";
   var a=0.10+0.45*Math.min(1,Math.abs(r)/maxAbs);
   return r>=0?"rgba(38,167,105,"+a.toFixed(3)+")":"rgba(240,51,75,"+a.toFixed(3)+")";
 }
-var secs=(D.sectors||[]).slice().sort(function(a,b){return b.strength-a.strength});
+var secs=(D.sectors||[]).filter(function(s){return !RETIRED[s.etf]}).slice();
+(D.techGroups||[]).forEach(function(g){
+  if(g.cat)secs.push({etf:g.cat,sector:g.label,strength:g.strength,ret1M:g.ret1M,x150:g.x150,tech:true});
+});
+secs.sort(function(a,b){return b.strength-a.strength});
 var wallSecs=secs.filter(function(s){
-  var st=turnState(SECT_TURNS[s.etf]);
+  var st=turnState(turnOf(s.etf));   /* 四子嘅狀態喺 TECH_TURNS，要用 turnOf */
   return st==="off"||st==="dnr";
 });
 (function(){
@@ -697,6 +724,7 @@ var wallSecs=secs.filter(function(s){
     var bd="";
     if(s.x150)bd+=' <span class="tb tbp">×150</span>';
     if(s.newHigh)bd+=' <span class="tb tbu">新高</span>';
+    if(s.tech)bd+=' '+badge("科技細分","b-pp");
     return '<div class="strrow" data-etf="'+esc(s.etf)+'">'
       +'<span class="str-rk">#'+(i+1)+"</span>"
       +'<span><div class="str-nm">'+esc(s.sector)+cnName(s.sector)+bd+"</div>"
@@ -711,31 +739,8 @@ var wallSecs=secs.filter(function(s){
   });
 })();
 
-/* ---- 科技細分（v1.7：跌穿 SMA50 嘅抽上 TOP TIER；TURNING 青框+NEW 章；
-   HOLDING 唔再喺度標；格仔強度分換細版電青速度錶（同強勢 list 統一款），
-   ETF ✓/✗ badge 保留） ---- */
-var tg=(D.techGroups||[]).filter(function(s){
-  return turnState(TECH_TURNS[s.cat])!=="below";
-});
-if(tg.length){
-  var tmax=Math.max.apply(null,[0.005].concat(tg.map(function(s){return Math.abs(s.ret1M||0)})));
-  var th='<div class="sec" style="margin-top:24px"><i></i><b>TECH SPLIT</b> // 科技細分（內部輪動）</div><div class="tm">';
-  tg.slice().sort(function(a,b){return a.rank-b.rank}).forEach(function(s){
-    var tb2=['<span class="tb '+(s.etfConfirm?"tbu":"")+'">'+esc(s.etf||"")+(s.etfConfirm?" ✓":" ✗")+"</span>"];
-    var tt=TECH_TURNS[s.cat],tts=turnState(tt),tcls="";
-    if(tts==="turning"){tb2.push('<span class="tb tbc">NEW</span>');tcls=" trn"}
-    th+='<div class="tile'+tcls+'" data-cat="'+esc(s.cat)+'" style="flex-grow:'+(s.strength||1).toFixed(1)+";background:"+heatBg(s.ret1M,tmax)+'">'
-      +'<div class="tb-row">'+tb2.join("")+"</div>"
-      +'<div class="t-etf">'+esc(s.cat)+"</div>"
-      +'<div class="t-nm">'+esc(s.label)+" · 排名 "+s.rank+"</div>"
-      +'<div class="t-row"><span style="width:86px">'+strGauge(s.strength)+"</span>"
-      +'<span class="num '+cls(s.ret1M)+'" style="font-size:16px">'+pct(s.ret1M)+"</span></div></div>";
-  });
-  $("techrow").innerHTML=th+"</div>";
-  Array.prototype.forEach.call($("techrow").querySelectorAll(".tile"),function(t){
-    t.addEventListener("click",function(){toggleDetail(t.getAttribute("data-cat"),t)});
-  });
-}
+/* ---- v1.9：TECH SPLIT 專區已刪除 —— 科技四子升做正式板塊，
+   跌穿嘅上反彈雷達、企上嘅入強勢 list、TURNING/HOLDING 上訊號卡區，唔再另設專區。 ---- */
 
 /* ---- drill-down 明細面板 ---- */
 var curKey=null,curStocks=[],curTab=0,curIxRows=[];
@@ -1108,7 +1113,7 @@ function ttGauge(score){
    由左下（0）經頂部填到 強度/100；已填刻度用弧上固定位置火焰漸變：
    左深橙 #FF4D00 → 中亮橙 #FF8C1A → 右焰尖 #FFC21C；
    指針 + 錶心分數 + glow 統一亮橙（全部行同色，唔跟分數變光暗）。
-   用喺強勢板塊 list 行尾同 TECH SPLIT 格仔。
+   用喺強勢板塊 list 行尾（v1.9 TECH SPLIT 專區已刪，四子融入強勢 list 用呢個錶）。
    （STR_SPEC / strArcC 定義喺檔案頂部工具區 —— 強勢 renderer 早過呢段執行，
      var 賦值唔 hoist，放呢度會 runtime undefined。） ---- */
 function strGauge(score){
@@ -1162,6 +1167,7 @@ function watchScore(key){
 (function(){
   var below=[];
   Object.keys(SECT_TURNS).forEach(function(k){
+    if(RETIRED[k])return;   /* v1.9：XLK 退役 */
     if(turnState(SECT_TURNS[k])==="below")below.push({key:k,t:SECT_TURNS[k],tech:false});
   });
   Object.keys(TECH_TURNS).forEach(function(k){
@@ -1171,6 +1177,7 @@ function watchScore(key){
   var NOTE_TOP="反彈雷達 = 收市跌穿咗當日 SMA50 · 等緊轉強訊號 · 留意值高→低排";
   var NOTE_FORMULA="留意值 = 60×貼線（距 SMA50 8% 歸零）+ 40×困日（連續收低於 SMA50 · 滿 20 日計滿）";
   var NOTE_STR="強勢板塊 = 收市企喺 SMA50 上 · 按舊強度分（0-100）高→低排";
+  if((D.techGroups||[]).length)NOTE_STR+=" · 科技細分為等權指數，強度尺與 SPDR 略有差異";
   var scored=[];
   below.forEach(function(r){var ws=watchScore(r.key);if(ws){r.ws=ws;scored.push(r)}});
   scored.sort(function(a,b){return b.ws.score-a.ws.score});
@@ -1185,19 +1192,30 @@ function watchScore(key){
     sec.innerHTML='<i></i><b>反彈雷達</b> // 低位蓄勢 · 值得留意 · '+scored.length+' 個';
     sec.style.display="";
   }
+  /* v1.9 bento：#1（留意值最高）做英雄格佔兩格闊，內容 = 錶 + 距 SMA50% + Top3 股票 */
+  function heroExtra(r,ws){
+    var s='<div class="tt-dist">距 SMA50 <span class="num '+cls(ws.dist)+'">'+pct(ws.dist)+"</span></div>";
+    var picks=(D.topPicks||[]).filter(function(p){return(p.etf||p.code)===r.key}).slice(0,3);
+    if(picks.length)s+='<div class="tt-top3">'+picks.map(function(p){
+      return '<b class="num">'+esc(p.ticker)+"</b> "+esc(p.name||"");
+    }).join("<br>")+"</div>";
+    return s;
+  }
   var h='<div class="ttgrid">',bits=[];
-  scored.forEach(function(r){
+  scored.forEach(function(r,idx){
     var nm=NAME[r.key]||r.key,ws=r.ws;
     /* v1.8：框色 = 分數光譜位置色；框透明度 + glow 尺寸/透明度跟分數線性（越高分越閃） */
     var f=Math.max(0,Math.min(1,ws.score/100)),c=ttArcC(f);
     var ba=(0.10+0.55*f).toFixed(2),ga=(0.06+0.50*f).toFixed(2),gs=Math.round(6+16*f);
-    h+='<div class="ttile" data-key="'+esc(r.key)+'" style="border-color:'+ttRgb(c,ba)
+    var hero=idx===0;
+    h+='<div class="ttile'+(hero?" hero":"")+'" data-key="'+esc(r.key)+'" style="border-color:'+ttRgb(c,ba)
       +';box-shadow:0 0 '+gs+'px '+ttRgb(c,ga)+'">'
       +'<div class="tt-day"><span class="badge" style="border-color:'+ttRgb(c,0.40)
       +';color:'+ttRgb(c,0.85)+';background:'+ttRgb(c,0.07)+'">'
       +(ws.capped?"≥":"第")+ws.days+(ws.capped?"":" 日")+"</span></div>"
-      +'<div class="tt-nm">'+esc(nm)+cnName(nm)+(r.tech?' <span style="color:var(--pp)">· 細分</span>':"")+"</div>"
+      +'<div class="tt-nm">'+esc(nm)+cnName(nm)+(r.tech?" "+badge("科技細分","b-pp"):"")+"</div>"
       +'<div class="tt-g">'+ttGauge(ws.score)+"</div>"
+      +(hero?heroExtra(r,ws):"")
       +"</div>";
     bits.push(esc(r.key)+" "+ws.score+"（"+pct(ws.dist)+" · "+ws.days+"日）");
   });
@@ -1243,26 +1261,41 @@ function watchScore(key){
   $("brksec").innerHTML=h;
 })();
 
-/* ---- 重點板塊候選股（US：全部 11 板塊各 5 隻；HK：全部 12 行業各 5 隻；gold 頁由 gold block 處理） ---- */
+/* ---- 重點板塊候選股（v1.9 US：10 SPDR + 4 科技細分 = 14 板塊各 5 隻 · XLK 表退役；
+   HK：全部 12 行業各 5 隻；gold 頁由 gold block 處理） ---- */
 if(!ISG)(function(){
   var picks=D.topPicks||[];
   if(!picks.length){$("top").innerHTML='<div class="empty">冇數據</div>';return}
   var groups=[],gmap={};
   picks.forEach(function(p){
     var k=p.etf||p.code||"";
-    if(!gmap[k]){gmap[k]={key:k,rank:p.sectorRank||0,name:p.sector||"",items:[]};groups.push(gmap[k])}
+    if(RETIRED[k])return;   /* v1.9：XLK 表退役 */
+    if(!gmap[k]){gmap[k]={key:k,rank:p.sectorRank||0,name:p.sector||"",tech:!!TECHCAT[k],items:[]};groups.push(gmap[k])}
     gmap[k].items.push(p);
   });
-  /* 組數 = 板塊總數 → 全板塊模式：中間名次唔標「弱勢」，最尾標「最弱」；
-     否則（HK 最強1+最弱4）照舊全部非第1標「弱勢」。 */
-  var allMode=groups.length>0&&groups.length===(D.sectors||[]).length;
-  var maxRk=0;groups.forEach(function(g){if(g.rank>maxRk)maxRk=g.rank});
-  var h="";
+  /* 組數 = 板塊總數（SPDR 唔計退役 XLK + 科技細分）→ 全板塊模式：
+     SPDR 按強度重排顯示名次（1..N，退役嘅 XLK 唔留吉位），最尾標「最弱」；
+     科技細分排最尾，用細分內部排名 + badge 標身份。 */
+  var expN=(D.sectors||[]).filter(function(s){return !RETIRED[s.etf]}).length+(D.techGroups||[]).length;
+  var allMode=groups.length>0&&groups.length===expN;
+  var strOf={};
+  (D.sectors||[]).forEach(function(s){strOf[s.etf]=s.strength||0});
+  (D.techGroups||[]).forEach(function(g){strOf[g.cat]=g.strength||0});
+  groups.sort(function(a,b){
+    if(a.tech!==b.tech)return a.tech?1:-1;
+    return (strOf[b.key]||0)-(strOf[a.key]||0);
+  });
+  var h="",spN=0,spTotal=groups.filter(function(g){return !g.tech}).length;
   groups.forEach(function(g){
-    var rk=g.rank;
-    var rb=rk===1?badge("#1 最強","b-up")
-      :(allMode?(maxRk>1&&rk===maxRk?badge("#"+rk+" 最弱","b-dn"):badge("#"+rk,""))
-               :badge("#"+rk+" 弱勢","b-dn"));
+    var rb;
+    if(g.tech){
+      rb=badge("科技細分 · #"+g.rank,"b-pp");
+    }else{
+      spN++;
+      rb=spN===1?badge("#1 最強","b-up")
+        :(allMode?(spTotal>1&&spN===spTotal?badge("#"+spN+" 最弱","b-dn"):badge("#"+spN,""))
+                 :badge("#"+spN+" 弱勢","b-dn"));
+    }
     h+='<div class="tpg-head"><span class="num w"><b>'+esc(g.key)+"</b></span><span>"
       +esc(g.name)+cnName(g.name)+"</span>"+rb+"</div>"
       +'<div class="twrap"><table class="dt"><tr><th>代號</th><th>名</th><th class="r">收市</th>'
