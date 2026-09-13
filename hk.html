@@ -119,7 +119,8 @@ cursor:pointer;transition:border-color .15s}
 .strrow:hover{border-color:rgba(255,140,26,.5);box-shadow:0 0 12px rgba(255,140,26,.12)}
 .str-rk{font-family:Consolas,Menlo,monospace;font-size:15px;color:#FF8C1A;
 font-weight:700;flex:0 0 36px}
-.str-nm{font-size:14px;font-weight:600}
+.str-nm{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+.str-nmt{min-width:0}
 .str-code{font-family:Consolas,Menlo,monospace;font-size:12px;color:var(--faint)}
 .str-ret{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:15px}
 .str-lbl{font-size:10px;color:var(--faint);letter-spacing:.1em}
@@ -209,12 +210,32 @@ border-top:1px solid var(--line);padding-top:18px;letter-spacing:.03em}
 padding-top:14px;margin-top:14px}
 .dt{font-size:12px}
 }
-@media (max-width:700px){
-.ttgrid{grid-template-columns:repeat(2,1fr);gap:10px}
-.ttile.hero{grid-column:1/-1}
-.hero .tt-g{width:56%}
+@media (max-width:767px){
+/* v2.2 hotfix：雷達 grid fluid 化 —— minmax(0,1fr) 殺死 min-content 撐爆 grid，
+   格 + 英雄格 max-width:100%，目標 320px 都零橫向溢出 */
+.ttgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ttile{min-width:0;max-width:100%}
+.ttile.hero{grid-column:1/-1;max-width:100%;box-sizing:border-box}
+.tt-g{max-width:100%}
+.hero .tt-g{width:56%;min-width:0;max-width:220px}
+.tt-nm{min-width:0}
+/* v2.2 hotfix：強勢行統一單行 nowrap 版式（唔准 wrap）—— 資訊區 flex:1 + min-width:0
+   食晒鬆動位，名太長 ellipsis；錶固定 64px 喺右，行高由錶固定 → 全部行一致 */
+.strrow{flex-wrap:nowrap;gap:8px;padding:10px 10px}
+.strrow>span:nth-child(2){flex:1 1 auto;min-width:0}
+.str-nm{font-size:12.5px;display:flex;align-items:center;gap:4px}
+.str-nmt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+.str-nm .badge{flex:0 0 auto;font-size:9px;padding:2px 5px;letter-spacing:.04em}
+.str-code{font-size:11px}
+.str-rk{flex:0 0 28px;font-size:13px}
+.str-ret{margin-left:0;font-size:13px;flex:0 0 auto;text-align:right}
+.str-g{flex:0 0 64px}
+/* gold 英雄格窄屏：大字標籤收細一格，卡頭名 ellipsis */
+.gh-state{font-size:16px}
+.gh-nm{flex:1;min-width:0}
+.gh-px{font-size:22px}
 }
-@media (max-width:599px){.wl-grid{grid-template-columns:1fr}.dt .nm{max-width:90px}.strrow{flex-wrap:wrap}.str-ret{margin-left:0}}
+@media (max-width:599px){.wl-grid{grid-template-columns:1fr}.dt .nm{max-width:90px}}
 /* ---- 教學頁（v2.1 guide.html：概念卡 + 活示範錶 + 手畫 SVG 示意 + 狀態流轉圖；
    mobile tabs 4 個要 wrap 先擺得落） ---- */
 .gdcard{border:1.5px solid var(--line);border-radius:6px;background:var(--panel);
@@ -731,7 +752,7 @@ var wallSecs=secs.filter(function(s){
     if(s.tech)bd+=' '+badge("科技細分","b-pp");
     return '<div class="strrow" data-etf="'+esc(s.etf)+'">'
       +'<span class="str-rk">#'+(i+1)+"</span>"
-      +'<span><div class="str-nm">'+esc(s.sector)+cnName(s.sector)+bd+"</div>"
+      +'<span><div class="str-nm"><span class="str-nmt">'+esc(s.sector)+cnName(s.sector)+"</span>"+bd+"</div>"
       +'<div class="str-code">'+esc(s.etf)+"</div></span>"
       +'<span class="str-ret '+cls(s.ret1M)+'">'+pct(s.ret1M)
       +'<div class="str-lbl">20日</div></span>'
