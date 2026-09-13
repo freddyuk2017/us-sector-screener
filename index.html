@@ -124,6 +124,22 @@ font-weight:700;flex:0 0 36px}
 .str-ret{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:15px}
 .str-lbl{font-size:10px;color:var(--faint);letter-spacing:.1em}
 .str-g{flex:0 0 88px}
+/* ---- 硬資產英雄格（v2.0 gold.html：GLD/IBIT 兩卡並排 · 強勢橙錶固定光 / 弱勢冷錶框光跟分數
+   · 大字狀態標籤 · mobile <768px 上下叠） ---- */
+.ghgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ghcard{position:relative;border:1.5px solid var(--line);border-radius:6px;
+background:var(--panel);padding:16px 18px 14px;
+display:flex;flex-direction:column;align-items:center;
+transition:border-color .15s,box-shadow .15s}
+.gh-head{display:flex;align-items:baseline;gap:10px;width:100%}
+.gh-tk{font-size:20px;font-weight:700}
+.gh-nm{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gh-px{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:26px;font-weight:700}
+.gh-state{font-size:20px;font-weight:700;letter-spacing:.06em;margin:12px 0 4px;text-align:center}
+.gh-g{width:200px;max-width:75%}
+.gh-meta{font-size:12.5px;color:var(--dim);margin-top:6px;font-family:Consolas,Menlo,monospace}
+.gh-sub{font-size:11px;color:var(--faint);margin-top:4px;font-family:Consolas,Menlo,monospace}
+@media (max-width:767px){.ghgrid{grid-template-columns:1fr}}
 /* ---- detail / chart ---- */
 .detail{background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--cy);
 border-radius:6px;padding:20px;margin-top:12px}
@@ -443,117 +459,91 @@ if(ISG)(function(){
      v1.2：GLD RANGE 區已由 TOP TIER 取代（呢度唔再改 sec_wl 標題） */
   ["sec_tm","tm"].forEach(function(id){var e=$(id);if(e)e.style.display="none"});
   var tops=$("sec_top");
-  if(tops)tops.innerHTML='<i></i><b>GOLD MINERS</b> // 金礦股排名（corr20 對 GLD）· 頭 5 名 = 候選股（撳行睇圖）';
+  if(tops)tops.innerHTML='<i></i><b>GOLD MINERS</b> // 金礦股 Top 5（評分高→低 · corr20 對 GLD）· 候選股有章（撳行睇圖）';
 
-  /* GLD 儀表：區間位置尺 + 狀態 badges（沿用儀表設計；框色跟 v1.2 五態） */
+  /* ---- v2.0 英雄格：GLD / IBIT 兩卡並排（頂部舊文字儀表退役） ----
+     狀態 = 收市 vs 當日 SMA50（sectorTurns 權威；冇 turn 數據當強勢款）：
+       強勢（收>SMA50）→ 270° 火焰橙錶 + 橙框固定光 + 大字「強勢 · 企喺 SMA50 之上」
+       弱勢 → 冷色光譜錶 + 框色光度跟分數（v1.8 公式）+ 大字「弱勢反彈 · SMA50 之下蓄勢」
+     錶數字 = 現有強度分（goldInfo / btcInfo .strength）；卡面齋：名 · 收市 · vs昨日 · 距SMA50 */
+  function heroCard(tk,nm,info,turn,extra){
+    info=info||{};
+    var weak=!!(turn&&turn.close!=null&&turn.sma50&&turn.close<=turn.sma50);
+    var score=info.strength!=null?info.strength:0;
+    var f=Math.max(0,Math.min(1,score/100));
+    var frame;
+    if(!weak)frame="border-color:rgba(255,140,26,.45);box-shadow:0 0 14px rgba(255,140,26,.14)";
+    else{
+      var c=ttArcC(f);
+      frame="border-color:"+ttRgb(c,(0.10+0.55*f).toFixed(2))
+        +";box-shadow:0 0 "+Math.round(6+16*f)+"px "+ttRgb(c,(0.06+0.50*f).toFixed(2));
+    }
+    var dist=(turn&&turn.close!=null&&turn.sma50)?(turn.close-turn.sma50)/turn.sma50:null;
+    return '<div class="ghcard" style="'+frame+'">'
+      +'<div class="gh-head"><span class="gh-tk num">'+esc(tk)+"</span>"
+      +'<span class="gh-nm">'+esc(nm)+"</span>"
+      +'<span class="gh-px num">'+priceFmt(info.close)+"</span></div>"
+      +(!weak
+        ?'<div class="gh-state" style="color:#FF8C1A">強勢 · 企喺 SMA50 之上</div>'
+        :'<div class="gh-state" style="color:'+ttRgb(ttArcC(f),0.95)+'">弱勢反彈 · SMA50 之下蓄勢</div>')
+      +'<div class="gh-g">'+(!weak?strGauge(score):ttGauge(score))+"</div>"
+      +'<div class="gh-meta">vs 昨日 <span class="'+cls(info.vsT1)+' num">'+pct(info.vsT1)+"</span>"
+      +(dist!=null?' · 距 SMA50 <span class="'+cls(dist)+' num">'+pct(dist)+"</span>":"")
+      +"</div>"
+      +(extra||"")
+      +"</div>";
+  }
+  /* Top5 表（v2.0：評分高→低 頭 5 · 10 欄 · 候選章 · 撳行 drill-down） */
+  function top5Table(rows,tops2,etf){
+    var th='<div class="twrap"><table class="dt"><tr><th>代號</th><th>名</th>'
+      +'<th class="r">評分</th><th class="r">corr('+etf+')</th><th class="r">市值</th>'
+      +'<th class="r">成交額20D</th><th class="r">收市</th><th class="r">vs昨日</th>'
+      +'<th class="r">20日</th><th class="r">相對'+etf+"</th></tr>";
+    rows.forEach(function(m){
+      var hot=!!tops2[m.ticker];
+      th+='<tr data-tk="'+esc(m.ticker)+'" style="cursor:pointer'
+        +(hot?';background:rgba(34,211,238,.07)':"")+'">'
+        +"<td class='num w'><b>"+esc(m.ticker)+"</b>"+(hot?" "+badge("候選","b-cy"):"")+"</td>"
+        +"<td><div class='nm'>"+esc(m.name||"")+"</div></td>"
+        +"<td class='r num'>"+(m.score!=null?m.score.toFixed(1):"—")+"</td>"
+        +"<td class='r'>"+corrHtml(m.corr)+"</td>"
+        +"<td class='r num'>"+capFmt(m.cap)+"</td>"
+        +"<td class='r num'>"+(m.avgVolUsd?capFmt(m.avgVolUsd):"—")+"</td>"
+        +"<td class='r num'>"+priceFmt(m.close)+"</td>"
+        +"<td class='r num "+cls(m.vsT1)+"'>"+pct(m.vsT1)+"</td>"
+        +"<td class='r num "+cls(m.ret20)+"'>"+pct(m.ret20)+"</td>"
+        +"<td class='r num "+cls(m.rel20)+"'>"+pct(m.rel20)+"</td></tr>";
+    });
+    return th+"</table></div>";
+  }
+  function top5of(list){
+    return (list||[]).slice().sort(function(a,b){return (b.score||0)-(a.score||0)}).slice(0,5);
+  }
   var gi=D.goldInfo||{};
-  var SIG={UP:["b-up","UP 上升"],WEAK:["b-am","WEAK 轉弱"],
-           DOWN:["b-dn","DOWN 下跌"],STRONG:["b-cy","STRONG 轉強"]};
-  var sc=SIG[gi.signal]||["","—"];
-  var gst=turnState((D.sectorTurns||{}).GLD);
-  var gfc=gst==="turning"?" fr-cy":gst==="holding"?" fr-up":gst==="below"?" fr-am":"";
-  var h='<div class="sec"><i></i><b>GLD DASHBOARD</b> // 黃金儀表（GLD 當板塊 ETF 分析）</div>'
-    +'<div class="panel'+gfc+'"><div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">'
-    +'<div style="flex:0 0 220px">'
-    +(gi.pos!=null?'<div class="gauge">'+gaugeSvg(gi.pos,priceFmt(gi.rangeBottom),priceFmt(gi.rangeTop),30)+'</div>'
-      :'<div class="empty" style="padding:30px 0">而家唔喺弱勢 range</div>')
-    +'</div>'
-    +'<div style="flex:1;min-width:260px">'
-    +'<div class="wl-head"><span class="wl-name num">GLD</span><span>SPDR Gold Shares</span>'
-    +badge(sc[1],sc[0])
-    +turnBadge((D.sectorTurns||{}).GLD,"GLD")
-    +(gi.break?badge("⚡ 突破 +"+(gi.break.ret*100).toFixed(1)+"%","b-cy"):"")
-    +(gi.daysInRange?badge("弱勢第 "+gi.daysInRange+" 日"):"")
-    +'<span style="margin-left:auto;font-size:22px" class="num w">'+priceFmt(gi.close)+"</span></div>"
-    +'<div class="meta2">vs 昨日 <span class="'+cls(gi.vsT1)+' num">'+pct(gi.vsT1)+"</span>"
-    +' · 1M <span class="'+cls(gi.ret1M)+' num">'+pct(gi.ret1M)+"</span>"
-    +' · vs SMA20 <span class="'+cls(gi.vsSMA20)+' num">'+pct(gi.vsSMA20)+"</span>"
-    +' · 強度 <span class="num">'+(gi.strength!=null?Math.round(gi.strength):"—")+"</span>"
-    +' · 排名 <span class="num">'+(gi.rank!=null?gi.rank+" / "+gi.rankTotal:"—")+"</span>（vs 11 SPDR）</div>"
-    +'<div class="meta2 num">MA20 '+priceFmt(gi.ma20)+" "
-    +(gi.aboveMA20?badge("企上","b-up"):badge("跌穿","b-dn"))
-    +' · MA50 '+priceFmt(gi.ma50)+" "
-    +(gi.aboveMA50?badge("企上","b-up"):badge("跌穿","b-dn"))
-    +' · SMA150 '+priceFmt(gi.sma150)+" "
-    +(gi.aboveSMA150?badge("企上","b-up"):badge("跌穿","b-dn"))+"</div>"
-    +((D.sectorTurns||{}).GLD?'<div class="meta2">'+turnMeta(D.sectorTurns.GLD)+"</div>":"")
-    +(gi.rangeTop!=null?'<div class="meta2 num" style="color:var(--faint)">range 頂 '
-      +priceFmt(gi.rangeTop)+' · 底 '+priceFmt(gi.rangeBottom)+"</div>":"")
-    +(gi.gdx?'<div class="meta2 num" style="color:var(--faint)">參考 GDX：收 '+priceFmt(gi.gdx.close)
-      +' · 昨日 <span class="'+cls(gi.gdx.vsT1)+'">'+pct(gi.gdx.vsT1)+'</span>'
-      +' · 1M <span class="'+cls(gi.gdx.ret1M)+'">'+pct(gi.gdx.ret1M)+"</span></div>":"")
-    +'</div></div></div>';
+  var gdxX=gi.gdx?'<div class="gh-sub">參考 GDX：收 '+priceFmt(gi.gdx.close)
+    +' · 昨日 <span class="'+cls(gi.gdx.vsT1)+'">'+pct(gi.gdx.vsT1)+'</span>'
+    +' · 1M <span class="'+cls(gi.gdx.ret1M)+'">'+pct(gi.gdx.ret1M)+"</span></div>":"";
+  var h='<div class="sec"><i></i><b>硬資產儀表</b> // GLD + IBIT 英雄格（強度分 0-100 · 狀態 = 收市 vs 當日 SMA50）</div>'
+    +'<div class="ghgrid">'
+    +heroCard("GLD","SPDR Gold Shares",D.goldInfo,(D.sectorTurns||{}).GLD,gdxX)
+    +heroCard("IBIT","iShares Bitcoin Trust",D.btcInfo,(D.sectorTurns||{}).IBIT,"")
+    +"</div>";
   $("golddash").innerHTML=h;
 
-  /* 金礦股排名表（全宇宙；頭 5 候選 highlight；撳行 drill-down） */
-  var miners=D.miners||[];
+  /* 金礦股 Top 5 表（v2.0：取代 17 行大表；候選章 = topPicks；撳行 drill-down） */
   var tops5={};
   (D.topPicks||[]).forEach(function(p){tops5[p.ticker]=1});
-  var th='<div class="twrap"><table class="dt"><tr><th>#</th><th>代號</th><th>名</th>'
-    +'<th class="r">評分</th><th class="r">corr(GLD)</th><th class="r">市值</th>'
-    +'<th class="r">成交額20D</th><th class="r">收市</th><th class="r">vs昨日</th>'
-    +'<th class="r">20日</th><th class="r">相對GLD</th><th></th></tr>';
-  miners.forEach(function(m,i){
-    var hot=!!tops5[m.ticker];
-    th+='<tr data-tk="'+esc(m.ticker)+'" style="cursor:pointer'
-      +(hot?';background:rgba(34,211,238,.07)':"")+'">'
-      +"<td class='num flat'>"+(i+1)+"</td>"
-      +"<td class='num w'><b>"+esc(m.ticker)+"</b>"+(hot?" "+badge("候選","b-cy"):"")+"</td>"
-      +"<td><div class='nm'>"+esc(m.name||"")+"</div></td>"
-      +"<td class='r num'>"+(m.score!=null?m.score.toFixed(1):"—")+"</td>"
-      +"<td class='r'>"+corrHtml(m.corr)+"</td>"
-      +"<td class='r num'>"+capFmt(m.cap)+"</td>"
-      +"<td class='r num'>"+(m.avgVolUsd?capFmt(m.avgVolUsd):"—")+"</td>"
-      +"<td class='r num'>"+priceFmt(m.close)+"</td>"
-      +"<td class='r num "+cls(m.vsT1)+"'>"+pct(m.vsT1)+"</td>"
-      +"<td class='r num "+cls(m.ret20)+"'>"+pct(m.ret20)+"</td>"
-      +"<td class='r num "+cls(m.rel20)+"'>"+pct(m.rel20)+"</td>"
-      +"<td>"+(m.newHigh20?badge("20D新高","b-up"):"")
-      +(m.crossSMA50?" "+badge("穿50線","b-pp"):"")+"</td></tr>";
-  });
-  th+="</table></div>";
-  $("top").innerHTML=th;
+  if(!(D.miners||[]).length){
+    $("top").innerHTML='<div class="empty">金礦股數據今日拉唔到</div>';
+  }else{
+    $("top").innerHTML=top5Table(top5of(D.miners),tops5,"GLD");
+  }
   Array.prototype.forEach.call($("top").querySelectorAll("tr[data-tk]"),function(tr){
     tr.addEventListener("click",function(){goldDrill(tr.getAttribute("data-tk"))});
   });
 
-  /* ---- ₿ 比特幣組：IBIT 儀表 + 突破 + 相關股表（同 GLD 組同一套；v1.2 框色跟五態） ---- */
-  var bi=D.btcInfo;
-  var bst=turnState((D.sectorTurns||{}).IBIT);
-  var bfc=bst==="turning"?" fr-cy":bst==="holding"?" fr-up":bst==="below"?" fr-am":"";
-  var bh='<div class="sec" style="margin-top:28px"><i></i><b>IBIT DASHBOARD</b> // 比特幣儀表（IBIT 當板塊 ETF 分析）</div>';
-  if(bi){
-    var bs=SIG[bi.signal]||["","—"];
-    bh+='<div class="panel'+bfc+'"><div style="display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start">'
-      +'<div style="flex:0 0 220px">'
-      +(bi.pos!=null?'<div class="gauge">'+gaugeSvg(bi.pos,priceFmt(bi.rangeBottom),priceFmt(bi.rangeTop),30)+'</div>'
-        :'<div class="empty" style="padding:30px 0">而家唔喺弱勢 range</div>')
-      +'</div>'
-      +'<div style="flex:1;min-width:260px">'
-      +'<div class="wl-head"><span class="wl-name num">IBIT</span><span>iShares Bitcoin Trust</span>'
-      +badge(bs[1],bs[0])
-      +turnBadge((D.sectorTurns||{}).IBIT,"IBIT")
-      +(bi.break?badge("⚡ 突破 +"+(bi.break.ret*100).toFixed(1)+"%","b-cy"):"")
-      +(bi.daysInRange?badge("弱勢第 "+bi.daysInRange+" 日"):"")
-      +'<span style="margin-left:auto;font-size:22px" class="num w">'+priceFmt(bi.close)+"</span></div>"
-      +'<div class="meta2">vs 昨日 <span class="'+cls(bi.vsT1)+' num">'+pct(bi.vsT1)+"</span>"
-      +' · 1M <span class="'+cls(bi.ret1M)+' num">'+pct(bi.ret1M)+"</span>"
-      +' · vs SMA20 <span class="'+cls(bi.vsSMA20)+' num">'+pct(bi.vsSMA20)+"</span>"
-      +' · 強度 <span class="num">'+(bi.strength!=null?Math.round(bi.strength):"—")+"</span>"
-      +' · 排名 <span class="num">'+(bi.rank!=null?bi.rank+" / "+bi.rankTotal:"—")+"</span>（vs 11 SPDR）</div>"
-      +'<div class="meta2 num">MA20 '+priceFmt(bi.ma20)+" "
-      +(bi.aboveMA20?badge("企上","b-up"):badge("跌穿","b-dn"))
-      +' · MA50 '+priceFmt(bi.ma50)+" "
-      +(bi.aboveMA50?badge("企上","b-up"):badge("跌穿","b-dn"))
-      +' · SMA150 '+priceFmt(bi.sma150)+" "
-      +(bi.aboveSMA150?badge("企上","b-up"):badge("跌穿","b-dn"))+"</div>"
-      +((D.sectorTurns||{}).IBIT?'<div class="meta2">'+turnMeta(D.sectorTurns.IBIT)+"</div>":"")
-      +(bi.rangeTop!=null?'<div class="meta2 num" style="color:var(--faint)">range 頂 '
-        +priceFmt(bi.rangeTop)+' · 底 '+priceFmt(bi.rangeBottom)+"</div>":"")
-      +'</div></div></div>';
-  }else{
-    bh+='<div class="panel"><div class="empty">IBIT 數據今日拉唔到</div></div>';
-  }
+  /* ---- ₿ 比特幣組（v2.0：IBIT 儀表已搬上頂部英雄格；呢度淨番 突破日候選 + Top 5 表） ---- */
+  var bh="";
 
   /* 比特幣組突破日候選股（btcBreakPicks 非空先顯示） */
   var bevs=D.btcBreakPicks||[];
@@ -586,37 +576,14 @@ if(ISG)(function(){
     });
   }
 
-  /* 比特幣相關股排名表（全宇宙；頭 5 候選 highlight；撳行 drill-down） */
-  var bm=D.btcStocks||[];
+  /* 比特幣相關股 Top 5 表（v2.0：取代全宇宙大表；候選章 = btcTopPicks；撳行 drill-down） */
   var btops={};
   (D.btcTopPicks||[]).forEach(function(p){btops[p.ticker]=1});
-  bh+='<div class="sec"><i></i><b>BITCOIN STOCKS</b> // 比特幣相關股排名（corr20 對 IBIT）· 頭 5 名 = 候選股（撳行睇圖）</div>';
-  if(!bm.length){
+  bh+='<div class="sec"><i></i><b>BITCOIN STOCKS</b> // 比特幣相關股 Top 5（評分高→低 · corr20 對 IBIT）· 候選股有章（撳行睇圖）</div>';
+  if(!(D.btcStocks||[]).length){
     bh+='<div class="panel"><div class="empty">比特幣相關股數據今日拉唔到</div></div>';
   }else{
-    bh+='<div class="twrap"><table class="dt"><tr><th>#</th><th>代號</th><th>名</th>'
-      +'<th class="r">評分</th><th class="r">corr(IBIT)</th><th class="r">市值</th>'
-      +'<th class="r">成交額20D</th><th class="r">收市</th><th class="r">vs昨日</th>'
-      +'<th class="r">20日</th><th class="r">相對IBIT</th><th></th></tr>';
-    bm.forEach(function(m,i){
-      var hot2=!!btops[m.ticker];
-      bh+='<tr data-tk="'+esc(m.ticker)+'" style="cursor:pointer'
-        +(hot2?';background:rgba(34,211,238,.07)':"")+'">'
-        +"<td class='num flat'>"+(i+1)+"</td>"
-        +"<td class='num w'><b>"+esc(m.ticker)+"</b>"+(hot2?" "+badge("候選","b-cy"):"")+"</td>"
-        +"<td><div class='nm'>"+esc(m.name||"")+"</div></td>"
-        +"<td class='r num'>"+(m.score!=null?m.score.toFixed(1):"—")+"</td>"
-        +"<td class='r'>"+corrHtml(m.corr)+"</td>"
-        +"<td class='r num'>"+capFmt(m.cap)+"</td>"
-        +"<td class='r num'>"+(m.avgVolUsd?capFmt(m.avgVolUsd):"—")+"</td>"
-        +"<td class='r num'>"+priceFmt(m.close)+"</td>"
-        +"<td class='r num "+cls(m.vsT1)+"'>"+pct(m.vsT1)+"</td>"
-        +"<td class='r num "+cls(m.ret20)+"'>"+pct(m.ret20)+"</td>"
-        +"<td class='r num "+cls(m.rel20)+"'>"+pct(m.rel20)+"</td>"
-        +"<td>"+(m.newHigh20?badge("20D新高","b-up"):"")
-        +(m.crossSMA50?" "+badge("穿50線","b-pp"):"")+"</td></tr>";
-    });
-    bh+="</table></div>";
+    bh+=top5Table(top5of(D.btcStocks),btops,"IBIT");
   }
   $("btcdash").innerHTML=bh;
   Array.prototype.forEach.call($("btcdash").querySelectorAll("tr[data-tk]"),function(tr){
