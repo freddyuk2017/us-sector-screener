@@ -92,21 +92,31 @@ box-shadow:0 0 16px rgba(38,167,105,.22),inset 0 0 16px rgba(38,167,105,.05)}
 .panel.fr-cy{border-color:var(--cy);box-shadow:0 0 16px rgba(34,211,238,.20)}
 .panel.fr-up{border-color:var(--up);box-shadow:0 0 16px rgba(38,167,105,.20)}
 .panel.fr-am{border-color:var(--am);box-shadow:0 0 12px rgba(240,160,48,.16)}
-/* ---- TOP TIER 正方形格仔牆（v1.4：金框格仔，每格名+代號+扇形能量表+第N日章） ---- */
-.ttgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+/* ---- TOP TIER 正方形格仔牆（v1.7：桌面 4 格一行放大 · 名+能量表+第N日章） ---- */
+.ttgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
 .ttile{position:relative;aspect-ratio:1/1;border:1px solid var(--am);border-radius:6px;
 background:var(--panel);box-shadow:0 0 12px rgba(240,160,48,.14);cursor:pointer;
-display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:28px 10px 6px;
+display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:32px 14px 10px;
 transition:border-color .15s,box-shadow .15s}
 .ttile:hover{border-color:#f0c060;box-shadow:0 0 16px rgba(240,160,48,.24)}
-.tt-nm{font-size:10px;color:var(--dim);text-align:center;line-height:1.4;
+.tt-nm{font-size:11.5px;color:var(--dim);text-align:center;line-height:1.5;
 white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.tt-code{font-family:Consolas,Menlo,monospace;font-size:14px;font-weight:700;
-color:#e8ecf2;margin-top:2px}
-.tt-g{width:92%;margin-top:auto}
-.tt-day{position:absolute;top:7px;right:7px}
+.tt-g{width:86%;margin-top:auto}
+.tt-day{position:absolute;top:9px;right:9px}
 .scorenote{margin-top:12px;font-size:11px;color:var(--faint);letter-spacing:.04em;
 line-height:1.8;font-family:Consolas,Menlo,monospace}
+/* ---- 強勢板塊 list（v1.7：SMA50 之上 · 行式 + 270° 電青速度錶） ---- */
+.strrow{display:flex;align-items:center;gap:14px;background:var(--panel);
+border:1px solid var(--line);border-radius:6px;padding:10px 16px;margin-bottom:8px;
+cursor:pointer;transition:border-color .15s}
+.strrow:hover{border-color:rgba(34,211,238,.5);box-shadow:0 0 12px rgba(34,211,238,.12)}
+.str-rk{font-family:Consolas,Menlo,monospace;font-size:15px;color:var(--cy);
+font-weight:700;flex:0 0 36px}
+.str-nm{font-size:14px;font-weight:600}
+.str-code{font-family:Consolas,Menlo,monospace;font-size:12px;color:var(--faint)}
+.str-ret{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:15px}
+.str-lbl{font-size:10px;color:var(--faint);letter-spacing:.1em}
+.str-g{flex:0 0 88px}
 /* ---- detail / chart ---- */
 .detail{background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--cy);
 border-radius:6px;padding:20px;margin-top:12px}
@@ -163,20 +173,21 @@ padding:6px 12px;font-size:12px}
 .foot{margin-top:44px;font-size:11px;color:var(--faint);line-height:1.9;
 border-top:1px solid var(--line);padding-top:18px;letter-spacing:.03em}
 /* ---- responsive ---- */
-@media (max-width:1199px){.wl-grid{grid-template-columns:repeat(3,1fr)}.ttgrid{grid-template-columns:repeat(5,1fr)}}
+@media (max-width:1199px){.wl-grid{grid-template-columns:repeat(3,1fr)}}
 @media (max-width:900px){
 .wrap{padding:18px 14px 50px}
 .clock{font-size:46px}
 .tile{flex-basis:150px}
 .wl-grid{grid-template-columns:repeat(2,1fr)}
-.ttgrid{grid-template-columns:repeat(3,1fr)}
+.ttgrid{grid-template-columns:repeat(2,1fr)}
+.str-g{flex-basis:72px}
 .ch-grid{grid-template-columns:1fr}
 .ch-col{padding-right:0}
 .ch-right{border-left:none;border-top:1px solid var(--line);padding-left:0;
 padding-top:14px;margin-top:14px}
 .dt{font-size:12px}
 }
-@media (max-width:599px){.wl-grid{grid-template-columns:1fr}.ttgrid{grid-template-columns:repeat(2,1fr)}.dt .nm{max-width:90px}}
+@media (max-width:599px){.wl-grid{grid-template-columns:1fr}.ttgrid{grid-template-columns:repeat(2,1fr)}.dt .nm{max-width:90px}.strrow{flex-wrap:wrap}.str-ret{margin-left:0}}
 </style></head><body>
 <div class="wrap">
 <header class="hd">
@@ -188,10 +199,10 @@ padding-top:14px;margin-top:14px}
 <div class="tabs"><a href="index.html" class="">美股 US</a><a href="hk.html" class="on">港股 HK</a><a href="gold.html" class="">硬資產 HARD</a></div>
 <div id="golddash"></div>
 <div id="sigsec"></div>
-<div class="sec" id="sec_wl"><i></i><b>TOP TIER</b> // 觀察板塊（收市跌穿咗 SMA50 · 等緊轉強訊號）</div>
+<div class="sec" id="sec_wl"><i></i><b>TOP TIER</b> // 觀察板塊</div>
 <div id="wl"></div>
-<div class="sec" id="sec_tm"><i></i><b>HEAT WALL</b> // 板塊熱力圖 · 12 行業（HSCI 市值加權）（撳格仔睇明細）</div>
-<div class="tm" id="tm"></div>
+<div class="sec" id="sec_str"><i></i><b>強勢板塊</b> // SMA50之上</div>
+<div id="strong"></div>
 <div id="techrow"></div>
 <div id="detail"></div>
 <div id="brksec"></div>
@@ -648,9 +659,10 @@ function sigCard(r){
   });
 })();
 
-/* ---- 板塊熱力圖（綠升紅跌） ----
-   v1.2：HEAT WALL 淨係擺「企喺 SMA50 上」嘅中性板塊（強度 0-100 大數字排名）；
-   跌穿咗嘅上咗 TOP TIER，TURNING/HOLDING 上咗訊號卡區。格仔唔寫 SMA50 文字。 */
+/* ---- 強勢板塊 list（v1.7：取代 HEAT WALL） ----
+   淨係擺「企喺 SMA50 上」嘅中性板塊，按舊強度分（0-100）高→低；
+   每行：排名 + 板塊名 + ticker + 20日%（綠升紅跌）+ 270° 電青速度錶；撳行開 drill-down。
+   跌穿咗嘅上咗 TOP TIER，TURNING/HOLDING 上咗訊號卡區。 */
 function heatBg(r,maxAbs){
   if(r==null||isNaN(r))return"rgba(35,40,48,.35)";
   var a=0.10+0.45*Math.min(1,Math.abs(r)/maxAbs);
@@ -661,26 +673,39 @@ var wallSecs=secs.filter(function(s){
   var st=turnState(SECT_TURNS[s.etf]);
   return st==="off"||st==="dnr";
 });
-var maxAbs=Math.max.apply(null,[0.005].concat(wallSecs.map(function(s){return Math.abs(s.ret1M||0)})));
-var stm=$("sec_tm");
-if(stm)stm.innerHTML='<i></i><b>HEAT WALL</b> // 板塊強度排名 · '+wallSecs.length+' 板塊（撳格仔睇明細）';
-$("tm").innerHTML=wallSecs.map(function(s){
-  var bd=[];
-  if(s.x150)bd.push('<span class="tb tbp">×150</span>');
-  if(s.newHigh)bd.push('<span class="tb tbu">新高</span>');
-  return '<div class="tile" data-etf="'+esc(s.etf)+'" style="flex-grow:'+(s.strength||1).toFixed(1)+";background:"+heatBg(s.ret1M,maxAbs)+'">'
-    +(bd.length?'<div class="tb-row">'+bd.join("")+"</div>":"")
-    +'<div class="t-etf">'+esc(s.etf)+"</div>"
-    +'<div class="t-nm">'+esc(s.sector)+cnName(s.sector)+"</div>"
-    +'<div class="t-row"><span><span class="t-lbl">強度 </span><span class="t-st">'+Math.round(s.strength)+"</span></span>"
-    +'<span class="num '+cls(s.ret1M)+'" style="font-size:16px">'+pct(s.ret1M)+"</span></div></div>";
-}).join("");
-Array.prototype.forEach.call($("tm").querySelectorAll(".tile"),function(t){
-  t.addEventListener("click",function(){toggleDetail(t.getAttribute("data-etf"),t)});
-});
+(function(){
+  var sec=$("sec_str"),box=$("strong");
+  if(!box)return;
+  if(!wallSecs.length){
+    box.innerHTML="";
+    if(sec)sec.style.display="none";
+    return;
+  }
+  if(sec){
+    sec.innerHTML='<i></i><b>強勢板塊</b> // SMA50之上 · '+wallSecs.length+' 個 · 強度高→低（撳行睇明細）';
+    sec.style.display="";
+  }
+  box.innerHTML=wallSecs.map(function(s,i){
+    var bd="";
+    if(s.x150)bd+=' <span class="tb tbp">×150</span>';
+    if(s.newHigh)bd+=' <span class="tb tbu">新高</span>';
+    return '<div class="strrow" data-etf="'+esc(s.etf)+'">'
+      +'<span class="str-rk">#'+(i+1)+"</span>"
+      +'<span><div class="str-nm">'+esc(s.sector)+cnName(s.sector)+bd+"</div>"
+      +'<div class="str-code">'+esc(s.etf)+"</div></span>"
+      +'<span class="str-ret '+cls(s.ret1M)+'">'+pct(s.ret1M)
+      +'<div class="str-lbl">20日</div></span>'
+      +'<span class="str-g">'+strGauge(s.strength)+"</span>"
+      +"</div>";
+  }).join("");
+  Array.prototype.forEach.call(box.querySelectorAll(".strrow"),function(t){
+    t.addEventListener("click",function(){toggleDetail(t.getAttribute("data-etf"),t)});
+  });
+})();
 
-/* ---- 科技細分（v1.3：跌穿 SMA50 嘅抽上 TOP TIER；TURNING 青框+NEW 章；
-   HOLDING 唔再喺度標（綠框同第N日章搬咗落頁底 HOLDING 區）） ---- */
+/* ---- 科技細分（v1.7：跌穿 SMA50 嘅抽上 TOP TIER；TURNING 青框+NEW 章；
+   HOLDING 唔再喺度標；格仔強度分換細版電青速度錶（同強勢 list 統一款），
+   ETF ✓/✗ badge 保留） ---- */
 var tg=(D.techGroups||[]).filter(function(s){
   return turnState(TECH_TURNS[s.cat])!=="below";
 });
@@ -695,7 +720,7 @@ if(tg.length){
       +'<div class="tb-row">'+tb2.join("")+"</div>"
       +'<div class="t-etf">'+esc(s.cat)+"</div>"
       +'<div class="t-nm">'+esc(s.label)+" · 排名 "+s.rank+"</div>"
-      +'<div class="t-row"><span><span class="t-lbl">強度 </span><span class="t-st">'+Math.round(s.strength)+"</span></span>"
+      +'<div class="t-row"><span style="width:86px">'+strGauge(s.strength)+"</span>"
       +'<span class="num '+cls(s.ret1M)+'" style="font-size:16px">'+pct(s.ret1M)+"</span></div></div>";
   });
   $("techrow").innerHTML=th+"</div>";
@@ -1014,28 +1039,27 @@ function gaugeSvg(pos,bottom,top,N){
   return s;
 }
 
-/* ---- TOP TIER 扇形能量表（v1.5：三階段紅黃綠轉速錶式） ----
-   刻度顏色由固定位置決定：弧左端 0 分位 = 霓紅 #FF4655 → 弧中 50 分位 = 霓黃 #FFC531
-   → 弧右端 100 分位 = 霓綠 #2DF2A1，中間連續漸變；成條光譜永遠紅→黃→綠咁排。
+/* ---- TOP TIER 扇形能量表（v1.7：霓虹光譜，繞過黃色） ----
+   刻度顏色由固定位置決定：0%=霓紅 #FF4655 → 25%=品紅 #FF3DF2 → 50%=電藍 #3D8BFF
+   → 75%=青 #22D3EE → 100%=綠 #2DF2A1，中間連續漸變；成條光譜永遠咁排。
    填充規則照舊：刻度填到 留意值/100 為止，未填保持暗灰。
-   指針 + 中央分數 + glow 用「而家階段」色：<34 紅 / 34-66 黃 / ≥67 綠。
+   指針 + 中央分數 + glow 用「分數所在位置」嘅光譜色（連續，唔係階段硬切）。
    純 SVG，無動畫依賴，static frame 完整。 ---- */
-var TT_STAGE=[[255,70,85],[255,197,49],[45,242,161]];
+var TT_SPEC=[[255,70,85],[255,61,242],[61,139,255],[34,211,238],[45,242,161]];
 function ttLerp(a,b,t){
   return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];
 }
-function ttArcC(f){ /* 弧上位置 0..1 → 光譜色 */
-  return f<0.5?ttLerp(TT_STAGE[0],TT_STAGE[1],f*2):ttLerp(TT_STAGE[1],TT_STAGE[2],(f-0.5)*2);
-}
-function ttStageC(score){ /* 而家階段色 */
-  return score<34?TT_STAGE[0]:score<67?TT_STAGE[1]:TT_STAGE[2];
+function ttArcC(f){ /* 弧上位置 0..1 → 霓虹光譜色（5 stops） */
+  f=Math.max(0,Math.min(1,f));
+  var seg=Math.min(3,Math.floor(f*4)),t=f*4-seg;
+  return ttLerp(TT_SPEC[seg],TT_SPEC[seg+1],t);
 }
 function ttRgb(c,a){return "rgba("+c[0]+","+c[1]+","+c[2]+","+(a==null?1:a)+")"}
 function ttGauge(score){
   var f=Math.max(0,Math.min(1,(score||0)/100));
   var cx=100,cy=94,r0=64,r1=78,N=48;
-  var st=ttStageC(score||0);
-  var s='<svg viewBox="0 0 200 132" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">';
+  var st=ttArcC(f);
+  var s='<svg viewBox="0 0 200 126" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">';
   /* 同心內弧虛線（掃描線 layering，暗） */
   s+='<path d="M '+(cx-50)+' '+cy+' A 50 50 0 0 1 '+(cx+50)+' '+cy
     +'" fill="none" stroke="rgba(240,160,48,.16)" stroke-width="1" stroke-dasharray="2 5"/>';
@@ -1055,20 +1079,57 @@ function ttGauge(score){
     if(lit)litLines+=ln+' stroke="'+ttRgb(ttArcC(f2),0.95)+'"/>';
     else s+=ln+' stroke="#262c34"/>';
   }
-  /* 能量弧霓光 glow（階段色） */
+  /* 能量弧霓光 glow（分數位置光譜色） */
   if(litLines)s+='<g style="filter:drop-shadow(0 0 3px '+ttRgb(st,0.85)+')">'+litLines+"</g>";
-  /* 指針（階段色，指住數值） */
+  /* 指針（光譜色，指住數值） */
   var a=Math.PI*(1-f),nx=(cx+54*Math.cos(a)).toFixed(1),ny=(cy-54*Math.sin(a)).toFixed(1);
   s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="'+ttRgb(st)+'" stroke-width="2.5"/>'
     +'<rect x="'+(cx-3)+'" y="'+(cy-3)+'" width="6" height="6" fill="'+ttRgb(st)+'"/>';
   /* 端點 0 / 100 細標 */
   s+='<text x="10" y="100" fill="#59626f" font-size="8" font-family="Consolas,Menlo,monospace">0</text>'
     +'<text x="190" y="100" fill="#59626f" font-size="8" text-anchor="end" font-family="Consolas,Menlo,monospace">100</text>';
-  /* 留意值數字（鑲喺弧心偏下，階段色 + glow） */
-  s+='<text x="100" y="122" text-anchor="middle" fill="'+ttRgb(st)+'" font-size="26" font-weight="700"'
+  /* 留意值數字（鑲喺弧心偏下，光譜色 + glow） */
+  s+='<text x="100" y="120" text-anchor="middle" fill="'+ttRgb(st)+'" font-size="27" font-weight="700"'
     +' font-family="Consolas,Menlo,monospace" style="filter:drop-shadow(0 0 5px '+ttRgb(st,0.55)+')">'
-    +Math.round(score||0)+"</text>"
-    +'<text x="100" y="131" text-anchor="middle" fill="#59626f" font-size="7.5" letter-spacing="1.5" font-family="Consolas,Menlo,monospace">留意值 WATCH</text>';
+    +Math.round(score||0)+"</text>";
+  return s+"</svg>";
+}
+
+/* ---- 強勢板塊速度碼表（v1.7：270° 汽車錶款，電青 cyan 系） ----
+   同 TOP TIER 嘅 180° 扇形明顯唔同款：刻度繞 270°（缺口喺正下方），
+   由左下（0）經頂部填到 強度/100；指針 + 錶心分數 + glow 全 cyan。
+   用喺強勢板塊 list 行尾同 TECH SPLIT 格仔。 ---- */
+function strGauge(score){
+  var f=Math.max(0,Math.min(1,(score||0)/100));
+  var cx=60,cy=62,r0=40,r1=50,N=40;
+  var CY=[34,211,238];
+  var th=function(g){return Math.PI*1.25-Math.PI*1.5*g};  /* 左下 225° → 頂 → 右下 -45° */
+  var s='<svg viewBox="0 0 120 112" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">';
+  /* 內圈虛線 layering */
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="30" fill="none" stroke="rgba(34,211,238,.10)"'
+    +' stroke-width="1" stroke-dasharray="2 5"/>';
+  var i,th2,x1,y1,x2,y2,lit,rb;
+  var litLines="";
+  for(i=0;i<N;i++){
+    var f2=i/(N-1);th2=th(f2);
+    rb=(i%5===0)?r0-4:r0;
+    x1=(cx+rb*Math.cos(th2)).toFixed(1);y1=(cy-rb*Math.sin(th2)).toFixed(1);
+    x2=(cx+r1*Math.cos(th2)).toFixed(1);y2=(cy-r1*Math.sin(th2)).toFixed(1);
+    lit=f2<=f+1e-9;
+    var ln='<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2
+      +'" stroke-width="'+(i%5===0?3.5:2.5)+'" stroke-linecap="round"';
+    if(lit)litLines+=ln+' stroke="rgba(34,211,238,.95)"/>';
+    else s+=ln+' stroke="#262c34"/>';
+  }
+  if(litLines)s+='<g style="filter:drop-shadow(0 0 3px rgba(34,211,238,.85))">'+litLines+"</g>";
+  /* 指針 */
+  var a=th(f),nx=(cx+34*Math.cos(a)).toFixed(1),ny=(cy-34*Math.sin(a)).toFixed(1);
+  s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="rgba(34,211,238,.95)" stroke-width="2.2"/>'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="3" fill="#22d3ee"/>';
+  /* 錶心強度分數 */
+  s+='<text x="'+cx+'" y="'+(cy+22)+'" text-anchor="middle" fill="#22d3ee" font-size="19" font-weight="700"'
+    +' font-family="Consolas,Menlo,monospace" style="filter:drop-shadow(0 0 4px rgba(34,211,238,.6))">'
+    +Math.round(score||0)+"</text>";
   return s+"</svg>";
 }
 
@@ -1095,18 +1156,21 @@ function watchScore(key){
     if(turnState(TECH_TURNS[k])==="below")below.push({key:k,t:TECH_TURNS[k],tech:true});
   });
   var sec=$("sec_wl"),note=$("scorenote");
+  var NOTE_TOP="TOP TIER 觀察板塊 = 收市跌穿咗當日 SMA50 · 等緊轉強訊號 · 留意值高→低排";
   var NOTE_FORMULA="留意值 = 60×貼線（距 SMA50 8% 歸零）+ 40×困日（連續收低於 SMA50 · 滿 20 日計滿）";
+  var NOTE_STR="強勢板塊 = 收市企喺 SMA50 上 · 按舊強度分（0-100）高→低排";
   var scored=[];
   below.forEach(function(r){var ws=watchScore(r.key);if(ws){r.ws=ws;scored.push(r)}});
   scored.sort(function(a,b){return b.ws.score-a.ws.score});
   if(!scored.length){
     $("wl").innerHTML="";
     if(sec)sec.style.display="none";
-    if(note)note.innerHTML='<div class="scorenote">'+NOTE_FORMULA+' ｜ 而家冇板塊喺 SMA50 下</div>';
+    if(note)note.innerHTML='<div class="scorenote">'+NOTE_TOP+" ｜ "+NOTE_FORMULA
+      +' ｜ 而家冇板塊喺 SMA50 下<br>'+NOTE_STR+"</div>";
     return;
   }
   if(sec){
-    sec.innerHTML='<i></i><b>TOP TIER</b> // 觀察板塊（收市跌穿咗 SMA50 · 等緊轉強訊號 · 留意值高→低）· '+scored.length+' 個';
+    sec.innerHTML='<i></i><b>TOP TIER</b> // 觀察板塊 · '+scored.length+' 個';
     sec.style.display="";
   }
   var h='<div class="ttgrid">',bits=[];
@@ -1115,14 +1179,13 @@ function watchScore(key){
     h+='<div class="ttile" data-key="'+esc(r.key)+'">'
       +'<div class="tt-day">'+badge((ws.capped?"≥":"第")+ws.days+(ws.capped?"":" 日"),"b-am")+"</div>"
       +'<div class="tt-nm">'+esc(nm)+cnName(nm)+(r.tech?' <span style="color:var(--pp)">· 細分</span>':"")+"</div>"
-      +'<div class="tt-code">'+esc(r.key)+"</div>"
       +'<div class="tt-g">'+ttGauge(ws.score)+"</div>"
       +"</div>";
     bits.push(esc(r.key)+" "+ws.score+"（"+pct(ws.dist)+" · "+ws.days+"日）");
   });
   h+="</div>";
   $("wl").innerHTML=h;
-  if(note)note.innerHTML='<div class="scorenote">'+NOTE_FORMULA+" ｜ "+bits.join(" · ")+"</div>";
+  if(note)note.innerHTML='<div class="scorenote">'+NOTE_TOP+" ｜ "+NOTE_FORMULA+" ｜ "+bits.join(" · ")+"<br>"+NOTE_STR+"</div>";
   Array.prototype.forEach.call($("wl").querySelectorAll(".ttile"),function(c){
     c.addEventListener("click",function(){toggleDetail(c.getAttribute("data-key"),null)});
   });
