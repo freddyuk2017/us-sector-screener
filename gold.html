@@ -289,7 +289,7 @@ padding-top:14px;margin-top:14px}
 .gh-px{font-size:22px}
 }
 @media (max-width:599px){.wl-grid{grid-template-columns:1fr}.dt .nm{max-width:90px}}
-/* ---- 教學頁（v2.1 guide.html：概念卡 + 活示範錶 + 手畫 SVG 示意 + 狀態流轉圖；
+/* ---- 教學頁（v2.1 guide.html：概念卡 + 活示範錶 + v3.3 真實 K 線圖 + 狀態流轉圖；
    mobile tabs 4 個要 wrap 先擺得落） ---- */
 .gdcard{border:1.5px solid var(--line);border-radius:6px;background:var(--panel);
 padding:22px 22px 18px;margin-bottom:18px}
@@ -309,6 +309,8 @@ padding:14px 10px 10px;text-align:center;margin-bottom:12px}
 .gd-cap{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.7}
 .gd-cap b{color:var(--dim)}
 .gd-svg{width:100%;height:auto;display:block}
+.gd-kline{width:100%;height:190px;display:block;background:var(--panel2);
+border:1px solid var(--line);border-radius:6px;margin-top:8px}
 .gd-live{display:inline-block;font-size:10px;color:var(--cy);border:1px solid rgba(34,211,238,.4);
 border-radius:3px;padding:1px 7px;letter-spacing:.1em;margin-bottom:8px}
 .gd-flow{display:flex;gap:8px;align-items:stretch;margin-top:10px}
@@ -1127,9 +1129,10 @@ function selectTab(i){
    indexS（v1.6 drill-down 板塊圖）= 紅綠 K 線（同左圖同期 120 日）+ SMA50（琥珀）
    + 最近交叉位標記。open 缺就合成（= 上日收），high/low 缺就開收較大/細值 ---- */
 function niceStep(r){var p=Math.pow(10,Math.floor(Math.log10(r)));var m=r/p;return(m<1.5?1:m<3.5?2:m<7.5?5:10)*p}
-function drawPanel(cvs,rows,mode){
+function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:顯示日數, tag:SMA50 圖例後加字} —— v3.3 教學頁重用 */
+  opts=opts||{};
   if(!cvs)return;
-  var W=cvs.clientWidth||cvs.parentElement.clientWidth,H=340;
+  var W=cvs.clientWidth||cvs.parentElement.clientWidth,H=opts.h||340;
   var dpr=window.devicePixelRatio||1;
   cvs.width=Math.round(W*dpr);cvs.height=Math.round(H*dpr);cvs.style.height=H+"px";
   var ctx=cvs.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
@@ -1150,9 +1153,9 @@ function drawPanel(cvs,rows,mode){
       s50+=closes[i0];if(i0>=50)s50-=closes[i0-50];
       sma50.push(i0>=49?s50/50:null);
     }
-    var preClose=null;
-    if(rows.length>120){
-      var off=rows.length-120;
+    var preClose=null,win=opts.win||120;
+    if(rows.length>win){
+      var off=rows.length-win;
       preClose=rows[off-1][4];
       rows=rows.slice(off);closes=closes.slice(off);sma50=sma50.slice(off);
     }
@@ -1242,6 +1245,8 @@ function drawPanel(cvs,rows,mode){
     /* 圖例 */
     ctx.font="10px Consolas,Menlo,monospace";
     ctx.fillStyle="#f0a030";ctx.fillText("— SMA50",padL+6,padT+8);
+    if(opts.tag){ctx.fillStyle="#8f98a5";
+      ctx.fillText(opts.tag,padL+14+ctx.measureText("— SMA50").width,padT+8)}
   }
   if(mode==="indexL"){
     /* 指數淨係得 close：青色收市價線 + 光暈 + 最新點 */
@@ -1653,10 +1658,20 @@ if(ISGUIDE)(function(){
    "sec_top","top","btcdash","holdsec","radar","scorenote"].forEach(function(id){
     var e=$(id);if(e)e.style.display="none";
   });
-  var ws=watchScore("XLU")||{score:69,dist:-0.0413,days:32,capped:false};
-  var xlc={sector:"Communication Services",strength:85,ret1M:0.0004};
-  (D.sectors||[]).forEach(function(s){if(s.etf==="XLC")xlc=s});
-  var picks3=(D.topPicks||[]).filter(function(p){return(p.etf||p.code)==="XLU"}).slice(0,3);
+  /* v3.3：動態揀示範板塊 —— ① 雷達第一名 = WAITING 入面留意值最高（同首頁摘要帶同一邏輯）；
+     ② 強勢第一名 = wallSecs[0]（rebuildSecs 已按強度高→低排）。冇數據 fallback 固定值，頁面點都 render 到 */
+  var g1key="XLU",ws=watchScore("XLU")||{score:69,dist:-0.0413,days:32,capped:false};
+  (function(){
+    var best=null;
+    function sc(k){if(stateV2Of(turnOf(k))!=="WAITING")return;
+      var w=watchScore(k);if(w&&(!best||w.score>best.w.score))best={key:k,w:w}}
+    Object.keys(SECT_TURNS).forEach(function(k){if(!RETIRED[k])sc(k)});
+    Object.keys(TECH_TURNS).forEach(sc);
+    if(best){g1key=best.key;ws=best.w}
+  })();
+  var g1nm=NAME[g1key]||"";
+  var g2=wallSecs[0]||{etf:"XLC",sector:"Communication Services",strength:85,ret1M:0.0004};
+  var picks3=(D.topPicks||[]).filter(function(p){return(p.etf||p.code)===g1key}).slice(0,3);
   var top3=picks3.map(function(p){
     return '<b class="num">'+esc(p.ticker)+"</b> "+esc(p.name||"");
   }).join("<br>");
@@ -1687,18 +1702,14 @@ if(ISGUIDE)(function(){
   +'</div><div>'
   +'<div class="gd-demo"><span class="gd-live">活示範 · 即日數據</span>'
   +'<div class="gd-g">'+ttGauge(ws.score)+'</div>'
-  +'<div class="gd-cap"><b>XLU 公用事業</b> · 留意值 <b>'+ws.score+'</b> 分 · '
+  +'<div class="gd-cap"><b>'+esc(g1key)+(g1nm?" "+esc(g1nm)+cnName(g1nm):"")+'</b> · 留意值 <b>'+ws.score+'</b> 分 · '
     +(ws.capped?"≥":"第 ")+'<b>'+ws.days+'</b>'+(ws.capped?"":" 日")
     +' · 距 SMA50 <span class="num '+cls(ws.dist)+'">'+pct(ws.dist)+'</span>'
     +(top3?'<br>Top 3：'+top3:'')+'</div></div>'
-  +'<svg class="gd-svg" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">'
-  +'<path d="M8 52 C 70 48, 150 46, 212 42" fill="none" stroke="#7a8494" stroke-width="1.5" stroke-dasharray="4 3"/>'
-  +'<path d="M8 96 C 45 100, 80 92, 115 82 C 150 72, 185 52, 206 46" fill="none" stroke="#3D8BFF" stroke-width="2"/>'
-  +'<circle cx="206" cy="46" r="3" fill="#3D8BFF"/>'
-  +'<text x="210" y="32" fill="#7a8494" font-size="9" text-anchor="end">SMA50</text>'
-  +'<text x="196" y="60" fill="#3D8BFF" font-size="9" text-anchor="end">價</text>'
-  +'</svg>'
-  +'<div class="gd-cap">示意：價喺 SMA50 之下蓄勢，越貼返上去條線分越高</div>'
+  +'<canvas id="gdchart1" class="gd-kline"></canvas>'
+  +'<div class="gd-cap">真實數據：<b>'+esc(g1key)+'</b> · 留意值 <b>'+ws.score+'</b>'
+    +' · '+(ws.capped?"≥":"第 ")+'<b>'+ws.days+'</b>'+(ws.capped?"":" 日")+' 低於 SMA50'
+    +' · K 線 = 價（綠升紅跌）· 琥珀線 = SMA50 · 近 90 日</div>'
   +'</div></div></div>'
 
   /* ② 強勢 */
@@ -1719,17 +1730,12 @@ if(ISGUIDE)(function(){
   +'</ul>'
   +'</div><div>'
   +'<div class="gd-demo"><span class="gd-live">活示範 · 即日數據</span>'
-  +'<div class="gd-g">'+strGauge(xlc.strength)+'</div>'
-  +'<div class="gd-cap"><b>XLC 通訊服務</b> · 強度 <b>'+Math.round(xlc.strength)+'</b>'
-    +' · 20日 <span class="num '+cls(xlc.ret1M)+'">'+pct(xlc.ret1M)+'</span></div></div>'
-  +'<svg class="gd-svg" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">'
-  +'<path d="M8 84 C 70 76, 150 58, 212 40" fill="none" stroke="#7a8494" stroke-width="1.5" stroke-dasharray="4 3"/>'
-  +'<path d="M8 68 C 45 72, 80 58, 115 48 C 150 38, 185 24, 206 18" fill="none" stroke="#FF8C1A" stroke-width="2"/>'
-  +'<circle cx="206" cy="18" r="3" fill="#FF8C1A"/>'
-  +'<text x="210" y="52" fill="#7a8494" font-size="9" text-anchor="end">SMA50</text>'
-  +'<text x="196" y="14" fill="#FF8C1A" font-size="9" text-anchor="end">價</text>'
-  +'</svg>'
-  +'<div class="gd-cap">示意：價喺 SMA50 之上，沿住條線升</div>'
+  +'<div class="gd-g">'+strGauge(g2.strength)+'</div>'
+  +'<div class="gd-cap"><b>'+esc(g2.etf)+(g2.sector?" "+esc(g2.sector)+cnName(g2.sector):"")+'</b> · 強度 <b>'+Math.round(g2.strength)+'</b>'
+    +' · 20日 <span class="num '+cls(g2.ret1M)+'">'+pct(g2.ret1M)+'</span></div></div>'
+  +'<canvas id="gdchart2" class="gd-kline"></canvas>'
+  +'<div class="gd-cap">真實數據：<b>'+esc(g2.etf)+'</b> · 強度 <b>'+Math.round(g2.strength)+'</b>'
+    +' · 企喺 SMA50 之上 · K 線 = 價（綠升紅跌）· 琥珀線 = SMA50 · 近 90 日</div>'
   +'</div></div></div>'
 
   /* ③ 四狀態流轉圖（v3.2 V2：WAITING → TURNING → HOLDING →（失效監察）→ INVALID → 返 WAITING） */
@@ -1776,6 +1782,12 @@ if(ISGUIDE)(function(){
   +'</ul>'
   +'</div></div></div>';
   $("guide").innerHTML=h;
+  /* v3.3：兩幅真實 K 線 —— 重用 drill-down 嘅 drawPanel（indexS 模式：紅綠蠟燭 + 琥珀 SMA50 + 交叉標記），
+     唔係另開一套畫法；90 日窗 + 190px 高 fit gd-demo 卡位 */
+  requestAnimationFrame(function(){
+    drawPanel($("gdchart1"),(D.indexCharts||{})[g1key]||[],"indexS",{h:190,win:90,tag:"▮ 價"});
+    drawPanel($("gdchart2"),(D.indexCharts||{})[g2.etf]||[],"indexS",{h:190,win:90,tag:"▮ 價"});
+  });
 })();
 
 /* ---- 💪 強勢獨立頁（v3.2 strong.html 專用；IS_STRONG 先執行） ----
