@@ -309,8 +309,8 @@ padding:14px 10px 10px;text-align:center;margin-bottom:12px}
 .gd-cap{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.7}
 .gd-cap b{color:var(--dim)}
 .gd-svg{width:100%;height:auto;display:block}
-.gd-kline{width:100%;height:190px;display:block;background:var(--panel2);
-border:1px solid var(--line);border-radius:6px;margin-top:8px}
+.gd-kline{width:100%;height:260px;display:block;background:var(--panel2);
+border:1px solid var(--line);border-radius:6px;margin-top:14px}
 .gd-live{display:inline-block;font-size:10px;color:var(--cy);border:1px solid rgba(34,211,238,.4);
 border-radius:3px;padding:1px 7px;letter-spacing:.1em;margin-bottom:8px}
 .gd-flow{display:flex;gap:8px;align-items:stretch;margin-top:10px}
@@ -1220,6 +1220,21 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
     ctx.stroke();ctx.setLineDash([]);
   }
   if(mode==="indexS"&&sma50){
+    /* v3.4 教學標註層（a）：陰影區 —— opts.annot.shade="below"|"above" 先畫；
+       價低於/高於 SMA50 嘅時段，線同價之間填半透明色（直條連排，喺蠟燭同 SMA50 線之下） */
+    var an=opts.annot;
+    if(an&&an.shade){
+      var below=an.shade==="below",stepx=iw/rows.length;
+      ctx.fillStyle="rgba("+(an.color||"126,142,247")+",0.12)";
+      for(var ai=0;ai<rows.length;ai++){
+        if(sma50[ai]==null)continue;
+        var ddf=closes[ai]-sma50[ai];
+        if(below?ddf<0:ddf>0){
+          var ya=y(closes[ai]),yb=y(sma50[ai]);
+          ctx.fillRect(x(ai)-stepx/2,Math.min(ya,yb),stepx,Math.max(1,Math.abs(yb-ya)));
+        }
+      }
+    }
     /* 最近交叉位：close 同 SMA50 嘅相對符號轉換點 */
     var cross=-1;
     for(var ci=1;ci<rows.length;ci++){
@@ -1277,6 +1292,41 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
         ctx.fillRect(cx-bw/2,bt,bw,Math.max(1,bb-bt));
       }
     });
+  }
+  /* v3.4 教學標註層（b）：霓虹 callout —— opts.annot.now（最近價位）/ crossUp / crossDown（交叉位，
+     按方向自動揀）；牌仔 + 虛線引出 + 目標圓點；上/下半區自動避蠟燭，clamp 喺圖框內；
+     drill-down 冇傳 annot 就完全唔畫，預設行為不變 */
+  if(mode==="indexS"&&sma50&&opts.annot){
+    var an2=opts.annot,acc=an2.accent||"#8f98a5";
+    var cross2=-1;
+    for(var cj=1;cj<rows.length;cj++){
+      if(sma50[cj]==null||sma50[cj-1]==null)continue;
+      var e0=closes[cj-1]-sma50[cj-1],e1=closes[cj]-sma50[cj];
+      if((e0<0)!==(e1<0))cross2=cj;
+    }
+    var tag=function(px,py,text,atBottom){
+      if(!text)return;
+      ctx.font="10px Consolas,Menlo,monospace";ctx.textBaseline="middle";
+      var tw=ctx.measureText(text).width,bw2=tw+14,bh2=18;
+      var by=atBottom?(pBot-30):((py>(padT+pBot)/2)?(padT+28):(pBot-48));
+      var bx=Math.max(padL+4,Math.min(W-padR-bw2-4,px-bw2/2));
+      by=Math.max(padT+4,Math.min(pBot-bh2-4,by));
+      var ex=Math.max(bx+4,Math.min(bx+bw2-4,px));
+      var ey=py<by?by:(py>by+bh2?by+bh2:Math.max(by,Math.min(by+bh2,py)));
+      ctx.strokeStyle=acc;ctx.setLineDash([2,3]);ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(px,py);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle="rgba(13,16,20,.92)";ctx.fillRect(bx,by,bw2,bh2);
+      ctx.strokeRect(bx+.5,by+.5,bw2-1,bh2-1);
+      ctx.fillStyle="#d7dde6";ctx.fillText(text,bx+7,by+bh2/2);
+      ctx.fillStyle=acc;ctx.beginPath();ctx.arc(px,py,2,0,6.2832);ctx.fill();
+    };
+    if(cross2>0)
+      tag(x(cross2),y(sma50[cross2]),
+          closes[cross2]>=sma50[cross2]?an2.crossUp:an2.crossDown,true);
+    if(an2.now){
+      var li=rows.length-1;
+      tag(x(li),y(closes[li]),an2.now,false);
+    }
   }
 }
 function drawChart(){
@@ -1706,11 +1756,12 @@ if(ISGUIDE)(function(){
     +(ws.capped?"≥":"第 ")+'<b>'+ws.days+'</b>'+(ws.capped?"":" 日")
     +' · 距 SMA50 <span class="num '+cls(ws.dist)+'">'+pct(ws.dist)+'</span>'
     +(top3?'<br>Top 3：'+top3:'')+'</div></div>'
+  +'</div>'
   +'<canvas id="gdchart1" class="gd-kline"></canvas>'
-  +'<div class="gd-cap">真實數據：<b>'+esc(g1key)+'</b> · 留意值 <b>'+ws.score+'</b>'
+  +'<div class="gd-cap" style="text-align:center">真實數據：<b>'+esc(g1key)+'</b> · 留意值 <b>'+ws.score+'</b>'
     +' · '+(ws.capped?"≥":"第 ")+'<b>'+ws.days+'</b>'+(ws.capped?"":" 日")+' 低於 SMA50'
     +' · K 線 = 價（綠升紅跌）· 琥珀線 = SMA50 · 近 90 日</div>'
-  +'</div></div></div>'
+  +'</div>'
 
   /* ② 強勢 */
   +'<div class="gdcard">'
@@ -1733,10 +1784,11 @@ if(ISGUIDE)(function(){
   +'<div class="gd-g">'+strGauge(g2.strength)+'</div>'
   +'<div class="gd-cap"><b>'+esc(g2.etf)+(g2.sector?" "+esc(g2.sector)+cnName(g2.sector):"")+'</b> · 強度 <b>'+Math.round(g2.strength)+'</b>'
     +' · 20日 <span class="num '+cls(g2.ret1M)+'">'+pct(g2.ret1M)+'</span></div></div>'
+  +'</div>'
   +'<canvas id="gdchart2" class="gd-kline"></canvas>'
-  +'<div class="gd-cap">真實數據：<b>'+esc(g2.etf)+'</b> · 強度 <b>'+Math.round(g2.strength)+'</b>'
+  +'<div class="gd-cap" style="text-align:center">真實數據：<b>'+esc(g2.etf)+'</b> · 強度 <b>'+Math.round(g2.strength)+'</b>'
     +' · 企喺 SMA50 之上 · K 線 = 價（綠升紅跌）· 琥珀線 = SMA50 · 近 90 日</div>'
-  +'</div></div></div>'
+  +'</div>'
 
   /* ③ 四狀態流轉圖（v3.2 V2：WAITING → TURNING → HOLDING →（失效監察）→ INVALID → 返 WAITING） */
   +'<div class="gdcard">'
@@ -1783,10 +1835,18 @@ if(ISGUIDE)(function(){
   +'</div></div></div>';
   $("guide").innerHTML=h;
   /* v3.3：兩幅真實 K 線 —— 重用 drill-down 嘅 drawPanel（indexS 模式：紅綠蠟燭 + 琥珀 SMA50 + 交叉標記），
-     唔係另開一套畫法；90 日窗 + 190px 高 fit gd-demo 卡位 */
+     唔係另開一套畫法；90 日窗 + v3.4 起 260px 全闊卡底 + annot 教學標註層（陰影區 + 霓虹 callout） */
   requestAnimationFrame(function(){
-    drawPanel($("gdchart1"),(D.indexCharts||{})[g1key]||[],"indexS",{h:190,win:90,tag:"▮ 價"});
-    drawPanel($("gdchart2"),(D.indexCharts||{})[g2.etf]||[],"indexS",{h:190,win:90,tag:"▮ 價"});
+    drawPanel($("gdchart1"),(D.indexCharts||{})[g1key]||[],"indexS",
+      {h:260,win:90,tag:"▮ 價",
+       annot:{shade:"below",color:"126,142,247",accent:"#3D8BFF",
+         now:"而家：距線 "+pct(ws.dist)+" · 貼線中",
+         crossDown:"跌破 SMA50 = 轉弱起點",crossUp:"升穿 SMA50 = 轉強"}});
+    drawPanel($("gdchart2"),(D.indexCharts||{})[g2.etf]||[],"indexS",
+      {h:260,win:90,tag:"▮ 價",
+       annot:{shade:"above",color:"255,140,26",accent:"#FF8C1A",
+         now:"企喺線上 = 升勢燃燒緊",
+         crossUp:"升穿 SMA50 = 轉強",crossDown:"跌破 SMA50 = 轉弱起點"}});
   });
 })();
 
