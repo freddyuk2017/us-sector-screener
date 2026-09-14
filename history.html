@@ -1,0 +1,338 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>訊號紀錄 HISTORY</title><style>
+:root{--bg:#0a0c0e;--panel:#12151a;--panel2:#0d1013;--line:#232830;--up:#26a769;--dn:#f0334b;
+--txt:#d7dde6;--dim:#7a8494;--faint:#59626f;--cy:#22d3ee;--am:#f0a030;--pp:#b78cf7}
+*{box-sizing:border-box;margin:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--txt);
+font-family:"Segoe UI","PingFang HK","PingFang SC","Microsoft JhengHei",sans-serif;
+background-image:linear-gradient(rgba(35,40,48,.30) 1px,transparent 1px),
+linear-gradient(90deg,rgba(35,40,48,.30) 1px,transparent 1px);
+background-size:28px 28px;min-height:100vh}
+.num{font-family:Consolas,Menlo,"Courier New",monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 22px 60px}
+a{color:var(--cy)}
+/* ---- header ---- */
+.hd{padding-bottom:20px;border-bottom:1px solid var(--line)}
+.brand{font-size:12px;letter-spacing:.24em;color:var(--dim)}
+.brand b{color:var(--cy);font-weight:600}
+.clock{font-family:Consolas,Menlo,monospace;font-size:34px;line-height:1;letter-spacing:.10em;
+color:#e8ecf2;text-shadow:0 0 16px rgba(215,221,230,.25),0 0 4px rgba(215,221,230,.35);
+margin-top:10px;font-variant-numeric:tabular-nums}
+.cdate{font-family:Consolas,Menlo,monospace;font-size:11.5px;color:var(--dim);
+letter-spacing:.16em;margin-top:6px}
+.meta-line{margin:10px 0 0;font-size:12px;color:var(--dim);letter-spacing:.05em}
+.meta-line.stale{color:var(--am);text-shadow:0 0 10px rgba(240,160,48,.35)}
+/* ---- tabs ---- */
+.tabs{display:flex;gap:10px;margin:20px 0 4px}
+.tabs a{min-width:140px;text-align:center;padding:10px 20px;border:1px solid var(--line);
+background:var(--panel);color:var(--dim);text-decoration:none;font-size:14px;
+letter-spacing:.12em;border-radius:4px}
+.tabs a.on{color:#0a0c0e;background:var(--cy);border-color:var(--cy);font-weight:700}
+/* ---- section title ---- */
+.sec{margin:36px 0 14px;font-size:13px;letter-spacing:.18em;color:var(--dim);
+font-family:Consolas,Menlo,monospace}
+.sec i{display:inline-block;width:9px;height:9px;background:var(--cy);margin-right:10px}
+.sec b{color:#e8ecf2;font-weight:600}
+/* ---- badges ---- */
+.badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:3px;
+letter-spacing:.08em;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.b-cy{border-color:var(--cy);color:var(--cy)}
+.b-up{border-color:var(--up);color:var(--up)}
+.b-dn{border-color:var(--dn);color:var(--dn)}
+.b-am{border-color:var(--am);color:var(--am)}
+.b-pp{border-color:var(--pp);color:var(--pp)}
+/* ---- signal / break cards ---- */
+.sig{border:1px solid var(--cy);
+box-shadow:0 0 16px rgba(34,211,238,.20),inset 0 0 16px rgba(34,211,238,.05);
+background:var(--panel);border-radius:6px;padding:18px 20px;margin-bottom:14px}
+.sig.missed{border-color:var(--line);box-shadow:none}
+.sig .meta2{font-size:12px;color:var(--dim);margin-top:8px;letter-spacing:.04em}
+/* ---- 倉位雷達 ---- */
+.sig.rd-red{border-color:var(--dn);
+box-shadow:0 0 16px rgba(240,51,75,.28),inset 0 0 16px rgba(240,51,75,.06)}
+.sig.rd-am{border-color:var(--am);box-shadow:0 0 12px rgba(240,160,48,.20)}
+.sig.rd-dim{border-color:var(--line);box-shadow:none}
+.rd-closed{margin-top:2px}
+.rd-closed summary{cursor:pointer;color:var(--dim);font-size:12px;
+letter-spacing:.1em;padding:10px 4px;list-style:none}
+.rd-closed summary:before{content:"▸ ";color:var(--faint)}
+.rd-closed[open] summary:before{content:"▾ "}
+.rd-closed summary:hover{color:var(--txt)}
+/* ---- treemap ---- */
+.tm{display:flex;flex-wrap:wrap;gap:6px}
+.tile{flex-grow:1;flex-basis:180px;min-height:124px;border:1px solid var(--line);
+border-radius:4px;padding:16px;cursor:pointer;position:relative;background:var(--panel);
+transition:border-color .15s,box-shadow .15s}
+.tile:hover{border-color:#39414e}
+.tile.act{border-color:var(--cy);box-shadow:0 0 14px rgba(34,211,238,.28)}
+.tile.static{cursor:default}
+.t-etf{font-size:21px;font-weight:700;color:#e8ecf2;letter-spacing:.04em;
+font-family:Consolas,Menlo,monospace}
+.t-nm{font-size:12px;color:var(--dim);margin-top:4px}
+.t-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px}
+.t-st{font-size:24px;color:#e8ecf2;font-family:Consolas,Menlo,monospace}
+.t-lbl{font-size:10px;color:var(--faint);letter-spacing:.1em}
+.tb-row{position:absolute;top:9px;right:9px;display:flex;gap:4px}
+.tb{font-size:10px;padding:2px 6px;border-radius:2px;background:rgba(10,12,14,.7);
+border:1px solid var(--line);color:var(--dim);font-family:Consolas,Menlo,monospace}
+.tbc{border-color:var(--cy);color:var(--cy)}
+.tbp{border-color:var(--pp);color:var(--pp)}
+.tbu{border-color:var(--up);color:var(--up)}
+.tbam{border-color:var(--am);color:var(--am)}
+/* ---- 五態框色（v1.2：所有狀態落格仔/卡，唔再文字列表） ---- */
+.tile.trn{border-color:var(--cy);box-shadow:0 0 14px rgba(34,211,238,.28)}
+.tile.hld{border-color:var(--up);box-shadow:0 0 14px rgba(38,167,105,.24)}
+.sig.hld{border-color:var(--up);
+box-shadow:0 0 16px rgba(38,167,105,.22),inset 0 0 16px rgba(38,167,105,.05)}
+.wcard.gold{border-color:var(--am);box-shadow:0 0 14px rgba(240,160,48,.16)}
+.panel.fr-cy{border-color:var(--cy);box-shadow:0 0 16px rgba(34,211,238,.20)}
+.panel.fr-up{border-color:var(--up);box-shadow:0 0 16px rgba(38,167,105,.20)}
+.panel.fr-am{border-color:var(--am);box-shadow:0 0 12px rgba(240,160,48,.16)}
+/* ---- 反彈雷達 bento 格仔牆（v1.9：#1 英雄格佔兩格闊（最高分配最光框）· 標準格 ~200px
+   · 板塊名貼錶頂冇中間真空；v1.8 框色跟分數光譜 · 光度/glow 跟分數，JS inline 驅動） ---- */
+.ttgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.ttile{position:relative;aspect-ratio:1/1;border:1.5px solid var(--line);border-radius:6px;
+background:var(--panel);cursor:pointer;
+display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 10px 12px;
+transition:border-color .15s,box-shadow .15s,filter .15s}
+.ttile:hover{filter:brightness(1.18)}
+.ttile.hero{grid-column:span 2;aspect-ratio:auto}
+.tt-nm{font-size:11.5px;color:var(--dim);text-align:center;line-height:1.5;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-bottom:2px}
+.tt-g{width:86%}
+.hero .tt-g{width:46%;min-width:170px}
+.tt-day{position:absolute;top:9px;right:9px}
+.tt-dist{font-family:Consolas,Menlo,monospace;font-size:12px;color:var(--dim);margin-top:4px}
+.tt-top3{margin-top:8px;font-size:10.5px;color:var(--faint);line-height:1.75;
+text-align:center;letter-spacing:.02em}
+.tt-top3 b{color:var(--dim);font-family:Consolas,Menlo,monospace}
+.scorenote{margin-top:12px;font-size:11px;color:var(--faint);letter-spacing:.04em;
+line-height:1.8;font-family:Consolas,Menlo,monospace}
+/* ---- 強勢板塊 list（v1.8：SMA50 之上 · 行式 + 270° 火焰橙速度錶） ---- */
+.strrow{display:flex;align-items:center;gap:14px;background:var(--panel);
+border:1px solid var(--line);border-radius:6px;padding:10px 16px;margin-bottom:8px;
+cursor:pointer;transition:border-color .15s}
+.strrow:hover{border-color:rgba(255,140,26,.5);box-shadow:0 0 12px rgba(255,140,26,.12)}
+.str-rk{font-family:Consolas,Menlo,monospace;font-size:15px;color:#FF8C1A;
+font-weight:700;flex:0 0 36px}
+.str-nm{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+.str-nmt{min-width:0}
+.str-code{font-family:Consolas,Menlo,monospace;font-size:12px;color:var(--faint)}
+.str-ret{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:15px}
+.str-lbl{font-size:10px;color:var(--faint);letter-spacing:.1em}
+.str-g{flex:0 0 88px}
+/* ---- 硬資產英雄格（v2.0 gold.html：GLD/IBIT 兩卡並排 · 強勢橙錶固定光 / 弱勢冷錶框光跟分數
+   · 大字狀態標籤 · mobile <768px 上下叠） ---- */
+.ghgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ghcard{position:relative;border:1.5px solid var(--line);border-radius:6px;
+background:var(--panel);padding:16px 18px 14px;
+display:flex;flex-direction:column;align-items:center;
+transition:border-color .15s,box-shadow .15s}
+.gh-head{display:flex;align-items:baseline;gap:10px;width:100%}
+.gh-tk{font-size:20px;font-weight:700}
+.gh-nm{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gh-px{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:26px;font-weight:700}
+.gh-state{font-size:20px;font-weight:700;letter-spacing:.06em;margin:12px 0 4px;text-align:center}
+.gh-g{width:200px;max-width:75%}
+.gh-meta{font-size:12.5px;color:var(--dim);margin-top:6px;font-family:Consolas,Menlo,monospace}
+.gh-sub{font-size:11px;color:var(--faint);margin-top:4px;font-family:Consolas,Menlo,monospace}
+@media (max-width:767px){.ghgrid{grid-template-columns:1fr}}
+/* ---- detail / chart ---- */
+.detail{background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--cy);
+border-radius:6px;padding:20px;margin-top:12px}
+.detail h3{font-size:16px;letter-spacing:.06em;font-weight:600}
+.detail .sub{font-size:12px;color:var(--dim);margin-top:4px}
+.stabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 12px}
+.stab{border:1px solid var(--line);background:var(--panel2);color:var(--dim);
+padding:8px 16px;border-radius:4px;cursor:pointer;
+font-family:Consolas,Menlo,monospace;font-size:13px;letter-spacing:.05em}
+.stab:hover{border-color:#39414e;color:var(--txt)}
+.stab.on{background:var(--cy);color:#0a0c0e;border-color:var(--cy);font-weight:700}
+.ch-info{font-family:Consolas,Menlo,monospace;font-size:13px;color:var(--dim);
+margin:4px 0 8px;letter-spacing:.04em}
+.ch-info b{color:#e8ecf2;font-size:15px}
+.ch-grid{display:grid;grid-template-columns:1fr 1fr;margin-top:6px}
+.ch-col{min-width:0;padding-right:14px}
+.ch-right{border-left:1px solid var(--line);padding-left:14px;padding-right:0}
+canvas#chart,canvas#ixchart{width:100%;height:340px;display:block;background:var(--panel2);
+border:1px solid var(--line);border-radius:4px}
+/* ---- tables ---- */
+.twrap{overflow-x:auto}
+table.dt{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px}
+.dt th{color:var(--faint);font-weight:400;font-size:11px;letter-spacing:.12em;
+text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.dt td{padding:9px 8px;border-bottom:1px solid #1b2027;vertical-align:middle}
+.dt .r{text-align:right}
+.dt tr:last-child td{border-bottom:none}
+.dt .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.up{color:var(--up)}.dn{color:var(--dn)}.flat{color:var(--faint)}.w{color:#e8ecf2}
+.cy{color:var(--cy)}
+/* ---- watchlist（gauge 卡陣） ---- */
+.wl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.wcard{background:var(--panel);border:1px solid var(--line);border-radius:6px;
+padding:14px 16px;cursor:pointer;transition:border-color .15s}
+.wcard:hover{border-color:#39414e}
+.wcard.brk{border-color:var(--cy);box-shadow:0 0 14px rgba(34,211,238,.18)}
+.wl-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wl-name{font-size:14px;font-weight:600}
+.wl-sub{font-size:11px;color:var(--faint);margin-top:3px;letter-spacing:.04em}
+.wl-grid .gauge{margin:10px auto 0;width:100%;max-width:170px}
+.wl-grid .chip{font-size:11px;padding:4px 8px}
+.wl-status{font-size:12px;margin-top:8px;letter-spacing:.04em}
+.st-am{color:var(--am)}.st-flat{color:var(--faint)}.st-up{color:var(--up)}
+.gauge svg{display:block;width:100%;height:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{border:1px solid var(--line);background:var(--panel2);border-radius:4px;
+padding:6px 12px;font-size:12px}
+.lead-lbl{font-size:11px;color:var(--faint);letter-spacing:.12em;margin-top:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 18px}
+.empty{color:var(--dim);font-size:13px;padding:6px 0}
+.tpg-head{font-size:13px;margin:16px 0 2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tpg-head:first-child{margin-top:2px}
+/* ---- v3.0 Phase 2A：頂部摘要帶（時鐘退做配角；四件最重要嘅事一眼睇晒） ---- */
+.sumb{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 0}
+.sumt{border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:12px 14px;min-width:0}
+.sum-lb{font-size:10.5px;color:var(--faint);letter-spacing:.14em;font-family:Consolas,Menlo,monospace}
+.sum-n{font-size:26px;font-weight:700;color:#e8ecf2;font-family:Consolas,Menlo,monospace;
+margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum-sub{font-size:11.5px;color:var(--dim);margin-top:4px;line-height:1.6;min-height:1.2em}
+.sum-note{margin-top:10px;font-size:11px;color:var(--faint);letter-spacing:.05em;
+font-family:Consolas,Menlo,monospace;line-height:1.8}
+/* ---- v3.0 四狀態卡（INVALID 用紅但唔搶眼） ---- */
+.sig.inv{border-color:rgba(240,51,75,.45);box-shadow:0 0 10px rgba(240,51,75,.08)}
+.hmeta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 18px;
+margin-top:10px;font-size:12.5px;color:var(--dim)}
+.hmeta .num{color:#e8ecf2}
+.hm-lb{color:var(--faint);font-size:11px;letter-spacing:.08em}
+/* ---- v3.0 分數解釋 popover（fixed 計位 · 滑鼠/鍵盤/觸控都用得 · Esc/撳出面閂） ---- */
+.pinfo{display:inline-block;border:1px solid var(--line);background:var(--panel2);color:var(--faint);
+border-radius:3px;font-size:10px;padding:0 7px;cursor:pointer;margin-left:6px;line-height:1.7;
+font-family:Consolas,Menlo,monospace;vertical-align:middle}
+.pinfo:hover,.pinfo:focus-visible{color:var(--cy);border-color:var(--cy);outline:none}
+.popfix{position:absolute;z-index:60;background:var(--panel2);border:1px solid #39414e;
+border-radius:6px;padding:10px 12px;font-size:11.5px;color:var(--dim);line-height:1.9;
+box-shadow:0 6px 20px rgba(0,0,0,.55);text-align:left;cursor:default}
+.popfix b{color:#e8ecf2}
+.popfix .pr{display:flex;justify-content:space-between;gap:12px;white-space:nowrap}
+/* ---- v3.0 Top5 組預設收起（details/summary 原生鍵盤可用） ---- */
+details.tpg{border:1px solid var(--line);border-radius:6px;background:var(--panel);margin-bottom:10px}
+details.tpg>summary{cursor:pointer;list-style:none;padding:11px 14px;display:flex;
+align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+details.tpg>summary:before{content:"▸";color:var(--faint)}
+details.tpg[open]>summary:before{content:"▾"}
+details.tpg>summary:hover{background:rgba(35,40,48,.35)}
+details.tpg>summary:focus-visible{outline:1.5px solid var(--cy);outline-offset:-2px}
+details.tpg[open]>summary{border-bottom:1px solid var(--line)}
+details.tpg .twrap{padding:4px 10px 10px}
+.tpg-hint{margin-left:auto;font-size:10.5px;color:var(--faint);letter-spacing:.08em}
+/* ---- v3.0 撳行提示 + 焦點態（§9/§14：唔准齋靠 hover） ---- */
+.str-hint{display:none;font-size:10.5px;color:var(--faint);letter-spacing:.06em;white-space:nowrap}
+@media (min-width:768px){.str-hint{display:inline}}
+.tt-hint{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;
+color:var(--faint);letter-spacing:.08em;pointer-events:none}
+.strrow:focus-visible,.ttile:focus-visible,.sig[data-key]:focus-visible,details.tpg>summary:focus-visible,
+[role="button"]:focus-visible{outline:1.5px solid var(--cy);outline-offset:2px}
+.ttile:focus-visible{outline-offset:-2px}
+.dback{border:1px solid var(--line);background:var(--panel2);color:var(--dim);
+padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;letter-spacing:.06em;
+font-family:Consolas,Menlo,monospace;margin-bottom:12px}
+.dback:hover,.dback:focus-visible{border-color:var(--cy);color:var(--cy);outline:none}
+/* ---- v3.0 英雄格獨立區（TOP REBOUND WATCH） ---- */
+.herowrap{max-width:640px}
+.herowrap .ttile.hero{max-width:100%}
+/* ---- footer ---- */
+.foot{margin-top:44px;font-size:11px;color:var(--faint);line-height:1.9;
+border-top:1px solid var(--line);padding-top:18px;letter-spacing:.03em}
+/* ---- responsive ---- */
+@media (max-width:1199px){.wl-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:900px){
+.wrap{padding:18px 14px 50px}
+.clock{font-size:26px}
+.sumb{grid-template-columns:repeat(2,1fr);gap:10px}
+.sum-n{font-size:21px}
+.tile{flex-basis:150px}
+.wl-grid{grid-template-columns:repeat(2,1fr)}
+.str-g{flex-basis:72px}
+.ch-grid{grid-template-columns:1fr}
+.ch-col{padding-right:0}
+.ch-right{border-left:none;border-top:1px solid var(--line);padding-left:0;
+padding-top:14px;margin-top:14px}
+.dt{font-size:12px}
+}
+@media (max-width:767px){
+/* v2.2 hotfix：雷達 grid fluid 化 —— minmax(0,1fr) 殺死 min-content 撐爆 grid，
+   格 + 英雄格 max-width:100%，目標 320px 都零橫向溢出 */
+.ttgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ttile{min-width:0;max-width:100%}
+.ttile.hero{grid-column:1/-1;max-width:100%;box-sizing:border-box}
+.tt-g{max-width:100%}
+.hero .tt-g{width:56%;min-width:0;max-width:220px}
+.tt-nm{min-width:0}
+/* v2.2 hotfix：強勢行統一單行 nowrap 版式（唔准 wrap）—— 資訊區 flex:1 + min-width:0
+   食晒鬆動位，名太長 ellipsis；錶固定 64px 喺右，行高由錶固定 → 全部行一致 */
+.strrow{flex-wrap:nowrap;gap:8px;padding:10px 10px}
+.strrow>span:nth-child(2){flex:1 1 auto;min-width:0}
+.str-nm{font-size:12.5px;display:flex;align-items:center;gap:4px}
+.str-nmt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+.str-nm .badge{flex:0 0 auto;font-size:9px;padding:2px 5px;letter-spacing:.04em}
+.str-code{font-size:11px}
+.str-rk{flex:0 0 28px;font-size:13px}
+.str-ret{margin-left:0;font-size:13px;flex:0 0 auto;text-align:right}
+.str-g{flex:0 0 64px}
+/* gold 英雄格窄屏：大字標籤收細一格，卡頭名 ellipsis */
+.gh-state{font-size:16px}
+.gh-nm{flex:1;min-width:0}
+.gh-px{font-size:22px}
+}
+@media (max-width:599px){.wl-grid{grid-template-columns:1fr}.dt .nm{max-width:90px}}
+/* ---- 教學頁（v2.1 guide.html：概念卡 + 活示範錶 + 手畫 SVG 示意 + 狀態流轉圖；
+   mobile tabs 4 個要 wrap 先擺得落） ---- */
+.gdcard{border:1.5px solid var(--line);border-radius:6px;background:var(--panel);
+padding:22px 22px 18px;margin-bottom:18px}
+.gd-h{font-size:17px;font-weight:700;letter-spacing:.05em;margin-bottom:8px}
+.gd-tag{font-size:11px;font-weight:400;color:var(--faint);letter-spacing:.08em;margin-left:8px}
+.gd-def{font-size:14px;line-height:1.9;margin-bottom:6px}
+.gd-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;align-items:start}
+.gd-sub{font-size:12px;color:var(--cy);letter-spacing:.1em;margin:14px 0 6px;
+font-family:Consolas,Menlo,monospace}
+.gd-ul{list-style:none;padding:0}
+.gd-ul li{font-size:13px;color:var(--dim);line-height:1.85;padding-left:16px;position:relative}
+.gd-ul li:before{content:"·";position:absolute;left:2px;color:var(--faint)}
+.gd-ul li b{color:var(--txt);font-weight:600}
+.gd-demo{border:1px dashed var(--line);border-radius:6px;background:var(--panel2);
+padding:14px 10px 10px;text-align:center;margin-bottom:12px}
+.gd-g{width:220px;max-width:82%;margin:0 auto}
+.gd-cap{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.7}
+.gd-cap b{color:var(--dim)}
+.gd-svg{width:100%;height:auto;display:block}
+.gd-live{display:inline-block;font-size:10px;color:var(--cy);border:1px solid rgba(34,211,238,.4);
+border-radius:3px;padding:1px 7px;letter-spacing:.1em;margin-bottom:8px}
+.gd-flow{display:flex;gap:8px;align-items:stretch;margin-top:10px}
+.gd-step{flex:1;border:1.5px solid var(--line);border-radius:6px;background:var(--panel2);
+padding:12px 10px;text-align:center}
+.gd-step b{display:block;font-size:13px;margin-bottom:5px}
+.gd-step span{font-size:11px;color:var(--dim);line-height:1.7;display:block}
+.gd-arrow{align-self:center;color:var(--faint);font-size:16px;flex:0 0 auto}
+@media (max-width:767px){
+.tabs{flex-wrap:wrap}
+.tabs a{flex:1 1 40%;min-width:0;padding:10px 8px}
+.gd-grid{grid-template-columns:1fr}
+.gd-flow{flex-direction:column}
+.gd-arrow{transform:rotate(90deg)}
+}
+</style></head><body>
+<div class="wrap">
+<header class="hd">
+  <div class="brand"><b>&#9632;</b> BOARD PULSE // 訊號紀錄 HISTORY</div>
+  <div class="meta-line">策略 SMA50_PREV_CLOSE_TV_CHOCH_V2 · 完整訊號紀錄 · 生成 2026-09-14 11:21:52</div>
+</header>
+<div class="tabs"><a href="index.html">美股 US</a><a href="hk.html">港股 HK</a><a href="gold.html">硬資產 HARD</a><a href="strong.html">強勢 STRONG</a><a href="guide.html">教學 GUIDE</a><a href="history.html" class="on">紀錄 HIST</a></div>
+<div class="sec"><i></i><b>HISTORY</b> // 訊號紀錄 · 三市場合共 44 條</div><div class="sum-note">歷史由 2026-09-14 V2 上線起持續累積，早期記錄由真實數據重建；同一板塊可以有多次獨立訊號，新訊號唔覆蓋舊紀錄。失效監察欄 = belowSMA50Count 變化（0→1→2 = 連續兩日收低於當日 SMA50 → INVALID）。</div><div class="sec"><i></i><b>美股 US</b> // 26 條紀錄 · HOLDING 3 · INVALID 23 · 生成 2026-09-14 10:26:19</div><div class="twrap"><table class="dt"><tr><th>代號</th><th>板塊名稱</th><th>觸發日</th><th class="r">觸發價</th><th class="r">觸發SMA50</th><th class="r">Radar分</th><th>轉HOLDING</th><th>失效監察</th><th>狀態</th><th>INVALID日</th><th class="r">持續日數</th><th class="r">期內最高</th><th class="r">期內最深</th><th class="r">最終回報</th><th>版本</th></tr><tr><td class='num w'><b>HW</b></td><td><div class='nm'>Hardware</div></td><td class='num'>2026-08-03</td><td class='r num'>2.54</td><td class='r num'>2.51</td><td class='r num'>51</td><td class='num'>2026-08-04</td><td class='num' style='color:var(--faint)'>—</td><td><span class="badge b-up">持續中 HOLDING</span></td><td class='num'>—</td><td class='r num'>29</td><td class='r'><span class='up num'>+11.6%</span></td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='up num'>+8.6%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLE</b></td><td><div class='nm'>Energy</div></td><td class='num'>2026-07-13</td><td class='r num'>56.74</td><td class='r num'>56.71</td><td class='r num'>60</td><td class='num'>2026-07-14</td><td class='num' style='color:var(--faint)'>1→0</td><td><span class="badge b-up">持續中 HOLDING</span></td><td class='num'>—</td><td class='r num'>44</td><td class='r'><span class='up num'>+15.1%</span></td><td class='r'><span class='dn num'>-0.4%</span></td><td class='r'><span class='up num'>+14.8%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLF</b></td><td><div class='nm'>Financials</div></td><td class='num'>2026-04-08</td><td class='r num'>51.20</td><td class='r num'>51.09</td><td class='r num'>58</td><td class='num'>2026-04-09</td><td class='num' style='color:var(--faint)'>1→0→1→0→1→0</td><td><span class="badge b-up">持續中 HOLDING</span></td><td class='num'>—</td><td class='r num'>109</td><td class='r'><span class='up num'>+14.4%</span></td><td class='r'><span class='dn num'>-0.8%</span></td><td class='r'><span class='up num'>+11.8%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>INT</b></td><td><div class='nm'>Internet</div></td><td class='num'>2026-09-02</td><td class='r num'>1.16</td><td class='r num'>1.16</td><td class='r num'>70</td><td class='num'>2026-09-03</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-09-08</td><td class='r num'>4</td><td class='r'><span class='up num'>+1.3%</span></td><td class='r'><span class='dn num'>-1.8%</span></td><td class='r'><span class='dn num'>-1.8%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>SEMI</b></td><td><div class='nm'>Semiconductors</div></td><td class='num'>2026-08-17</td><td class='r num'>2.57</td><td class='r num'>2.62</td><td class='r num'>86</td><td class='num'>2026-08-18</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-08-19</td><td class='r num'>3</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-6.1%</span></td><td class='r'><span class='dn num'>-6.1%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>INT</b></td><td><div class='nm'>Internet</div></td><td class='num'>2026-08-13</td><td class='r num'>1.19</td><td class='r num'>1.17</td><td class='r num'>44</td><td class='num'>2026-08-14</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-08-18</td><td class='r num'>4</td><td class='r'><span class='up num'>+0.7%</span></td><td class='r'><span class='dn num'>-3.6%</span></td><td class='r'><span class='dn num'>-3.6%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLK</b></td><td><div class='nm'>Information Technology</div></td><td class='num'>2026-08-04</td><td class='r num'>186.9</td><td class='r num'>183.2</td><td class='r num'>45</td><td class='num'>2026-08-05</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-08-25</td><td class='r num'>16</td><td class='r'><span class='up num'>+2.1%</span></td><td class='r'><span class='dn num'>-3.7%</span></td><td class='r'><span class='dn num'>-2.8%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>INT</b></td><td><div class='nm'>Internet</div></td><td class='num'>2026-08-03</td><td class='r num'>1.19</td><td class='r num'>1.17</td><td class='r num'>53</td><td class='num'>2026-08-04</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-08-07</td><td class='r num'>5</td><td class='r'><span class='up num'>+1.5%</span></td><td class='r'><span class='dn num'>-1.5%</span></td><td class='r'><span class='dn num'>-1.4%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLC</b></td><td><div class='nm'>Communication Services</div></td><td class='num'>2026-07-15</td><td class='r num'>113.4</td><td class='r num'>112.6</td><td class='r num'>55</td><td class='num'>2026-07-16</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-07-20</td><td class='r num'>4</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-2.4%</span></td><td class='r'><span class='dn num'>-2.3%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLV</b></td><td><div class='nm'>Health Care</div></td><td class='num'>2026-05-13</td><td class='r num'>146.7</td><td class='r num'>147.3</td><td class='r num'>97</td><td class='num'>2026-05-14</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-05-15</td><td class='r num'>3</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-1.1%</span></td><td class='r'><span class='dn num'>-1.1%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>SOFT</b></td><td><div class='nm'>Software</div></td><td class='num'>2026-04-14</td><td class='r num'>0.90</td><td class='r num'>0.92</td><td class='r num'>91</td><td class='num'>2026-04-15</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-06-22</td><td class='r num'>48</td><td class='r'><span class='up num'>+33.4%</span></td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='up num'>+9.7%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLB</b></td><td><div class='nm'>Materials</div></td><td class='num'>2026-04-08</td><td class='r num'>51.75</td><td class='r num'>50.79</td><td class='r num'>46</td><td class='num'>2026-04-09</td><td class='num' style='color:var(--faint)'>1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-05-18</td><td class='r num'>29</td><td class='r'><span class='up num'>+1.3%</span></td><td class='r'><span class='dn num'>-3.0%</span></td><td class='r'><span class='dn num'>-3.0%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLK</b></td><td><div class='nm'>Information Technology</div></td><td class='num'>2026-04-08</td><td class='r num'>141.7</td><td class='r num'>139.2</td><td class='r num'>47</td><td class='num'>2026-04-09</td><td class='num' style='color:var(--faint)'>1→0→1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-07-16</td><td class='r num'>69</td><td class='r'><span class='up num'>+39.9%</span></td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='up num'>+25.3%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLY</b></td><td><div class='nm'>Consumer Discretionary</div></td><td class='num'>2026-04-08</td><td class='r num'>110.8</td><td class='r num'>114.4</td><td class='r num'>76</td><td class='num'>2026-04-09</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-04-10</td><td class='r num'>3</td><td class='r'><span class='up num'>+1.9%</span></td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='up num'>+1.9%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>INT</b></td><td><div class='nm'>Internet</div></td><td class='num'>2026-04-07</td><td class='r num'>1.03</td><td class='r num'>1.02</td><td class='r num'>54</td><td class='num'>2026-04-08</td><td class='num' style='color:var(--faint)'>1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-06-12</td><td class='r num'>48</td><td class='r'><span class='up num'>+20.4%</span></td><td class='r'><span class='dn num'>-2.1%</span></td><td class='r'><span class='up num'>+10.3%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLP</b></td><td><div class='nm'>Consumer Staples</div></td><td class='num'>2026-04-06</td><td class='r num'>82.66</td><td class='r num'>85.23</td><td class='r num'>65</td><td class='num'>2026-04-07</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-04-08</td><td class='r num'>3</td><td class='r'><span class='up num'>+0.1%</span></td><td class='r'><span class='dn num'>-1.7%</span></td><td class='r'><span class='up num'>+0.1%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLV</b></td><td><div class='nm'>Health Care</div></td><td class='num'>2026-04-01</td><td class='r num'>147.7</td><td class='r num'>153.5</td><td class='r num'>72</td><td class='num'>2026-04-02</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-04-06</td><td class='r num'>3</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-1.0%</span></td><td class='r'><span class='dn num'>-1.0%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>SOFT</b></td><td><div class='nm'>Software</div></td><td class='num'>2026-03-04</td><td class='r num'>0.95</td><td class='r num'>1.01</td><td class='r num'>61</td><td class='num'>2026-03-05</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-03-06</td><td class='r num'>3</td><td class='r'><span class='up num'>+1.5%</span></td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='up num'>+1.3%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLC</b></td><td><div class='nm'>Communication Services</div></td><td class='num'>2026-02-27</td><td class='r num'>118.0</td><td class='r num'>116.8</td><td class='r num'>52</td><td class='num'>2026-03-02</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-03-13</td><td class='r num'>11</td><td class='r'><span class='up num'>+0.6%</span></td><td class='r'><span class='dn num'>-3.0%</span></td><td class='r'><span class='dn num'>-3.0%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLU</b></td><td><div class='nm'>Utilities</div></td><td class='num'>2026-01-02</td><td class='r num'>43.18</td><td class='r num'>43.97</td><td class='r num'>87</td><td class='num'>2026-01-05</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-01-06</td><td class='r num'>3</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-1.1%</span></td><td class='r'><span class='dn num'>-0.6%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLB</b></td><td><div class='nm'>Materials</div></td><td class='num'>2025-11-26</td><td class='r num'>44.45</td><td class='r num'>43.96</td><td class='r num'>52</td><td class='num'>2025-11-28</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2025-12-09</td><td class='r num'>9</td><td class='r'><span class='up num'>+0.6%</span></td><td class='r'><span class='dn num'>-2.4%</span></td><td class='r'><span class='dn num'>-2.4%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLC</b></td><td><div class='nm'>Communication Services</div></td><td class='num'>2025-11-25</td><td class='r num'>114.3</td><td class='r num'>115.1</td><td class='r num'>93</td><td class='num'>2025-11-26</td><td class='num' style='color:var(--faint)'>1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-01-20</td><td class='r num'>37</td><td class='r'><span class='up num'>+3.5%</span></td><td class='r'><span class='dn num'>-0.7%</span></td><td class='r'><span class='dn num'>-0.7%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLP</b></td><td><div class='nm'>Consumer Staples</div></td><td class='num'>2025-11-21</td><td class='r num'>77.90</td><td class='r num'>77.98</td><td class='r num'>99</td><td class='num'>2025-11-24</td><td class='num' style='color:var(--faint)'>1→0→1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2025-12-23</td><td class='r num'>22</td><td class='r'><span class='up num'>+2.2%</span></td><td class='r'><span class='dn num'>-1.2%</span></td><td class='r'><span class='dn num'>-0.5%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLF</b></td><td><div class='nm'>Financials</div></td><td class='num'>2025-10-27</td><td class='r num'>53.33</td><td class='r num'>53.36</td><td class='r num'>84</td><td class='num'>2025-10-28</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2025-10-29</td><td class='r num'>3</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-2.3%</span></td><td class='r'><span class='dn num'>-2.3%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLE</b></td><td><div class='nm'>Energy</div></td><td class='num'>2025-10-22</td><td class='r num'>43.90</td><td class='r num'>44.06</td><td class='r num'>77</td><td class='num'>2025-10-23</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2025-10-27</td><td class='r num'>4</td><td class='r'><span class='up num'>+1.3%</span></td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='up num'>+0.6%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>XLP</b></td><td><div class='nm'>Consumer Staples</div></td><td class='num'>2025-10-14</td><td class='r num'>79.09</td><td class='r num'>80.11</td><td class='r num'>90</td><td class='num'>2025-10-15</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2025-10-16</td><td class='r num'>3</td><td class='r'><span class='up num'>+0.2%</span></td><td class='r'><span class='dn num'>-0.5%</span></td><td class='r'><span class='dn num'>-0.5%</span></td><td><span class="badge b-cy">V2</span></td></tr></table></div><div class="sec"><i></i><b>港股 HK</b> // 14 條紀錄 · HOLDING 1 · INVALID 13 · 生成 2026-09-14 10:30:28</div><div class="twrap"><table class="dt"><tr><th>代號</th><th>板塊名稱</th><th>觸發日</th><th class="r">觸發價</th><th class="r">觸發SMA50</th><th class="r">Radar分</th><th>轉HOLDING</th><th>失效監察</th><th>狀態</th><th>INVALID日</th><th class="r">持續日數</th><th class="r">期內最高</th><th class="r">期內最深</th><th class="r">最終回報</th><th>版本</th></tr><tr><td class='num w'><b>HSCIM</b></td><td><div class='nm'>Materials</div></td><td class='num'>2026-07-21</td><td class='r num'>2.29</td><td class='r num'>2.43</td><td class='r num'>56</td><td class='num'>2026-07-22</td><td class='num' style='color:var(--faint)'>1→0→1→0→1→0</td><td><span class="badge b-up">持續中 HOLDING</span></td><td class='num'>—</td><td class='r num'>39</td><td class='r'><span class='up num'>+22.6%</span></td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='up num'>+14.4%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCIT</b></td><td><div class='nm'>Telecommunications</div></td><td class='num'>2026-07-23</td><td class='r num'>1.05</td><td class='r num'>1.06</td><td class='r num'>92</td><td class='num'>2026-07-24</td><td class='num' style='color:var(--faint)'>1→0→1→0→1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-08-27</td><td class='r num'>26</td><td class='r'><span class='up num'>+3.6%</span></td><td class='r'><span class='dn num'>-2.3%</span></td><td class='r'><span class='dn num'>-2.3%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCII</b></td><td><div class='nm'>Industrials</div></td><td class='num'>2026-07-21</td><td class='r num'>1.94</td><td class='r num'>2.06</td><td class='r num'>51</td><td class='num'>2026-07-22</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-07-23</td><td class='r num'>3</td><td class='r'><span class='up num'>+0.9%</span></td><td class='r'><span class='dn num'>-1.4%</span></td><td class='r'><span class='up num'>+0.9%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCICD</b></td><td><div class='nm'>Consumer Discretionary</div></td><td class='num'>2026-07-16</td><td class='r num'>1.15</td><td class='r num'>1.14</td><td class='r num'>55</td><td class='num'>2026-07-17</td><td class='num' style='color:var(--faint)'>1→0→1→0→1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-09-02</td><td class='r num'>35</td><td class='r'><span class='up num'>+5.2%</span></td><td class='r'><span class='dn num'>-3.8%</span></td><td class='r'><span class='dn num'>-3.8%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCICG</b></td><td><div class='nm'>Conglomerates</div></td><td class='num'>2026-07-14</td><td class='r num'>1.38</td><td class='r num'>1.42</td><td class='r num'>79</td><td class='num'>2026-07-15</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-07-16</td><td class='r num'>3</td><td class='r'><span class='up num'>+0.9%</span></td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='up num'>+0.6%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCIIT</b></td><td><div class='nm'>Information Technology</div></td><td class='num'>2026-07-08</td><td class='r num'>1.52</td><td class='r num'>1.47</td><td class='r num'>37</td><td class='num'>2026-07-09</td><td class='num' style='color:var(--faint)'>1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-07-23</td><td class='r num'>12</td><td class='r'><span class='up num'>+0.8%</span></td><td class='r'><span class='dn num'>-4.8%</span></td><td class='r'><span class='dn num'>-4.6%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCIH</b></td><td><div class='nm'>Healthcare</div></td><td class='num'>2026-06-29</td><td class='r num'>1.81</td><td class='r num'>1.86</td><td class='r num'>78</td><td class='num'>2026-06-30</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-07-02</td><td class='r num'>3</td><td class='r'><span class='up num'>+2.1%</span></td><td class='r'><span class='dn num'>-1.5%</span></td><td class='r'><span class='up num'>+2.1%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCICD</b></td><td><div class='nm'>Consumer Discretionary</div></td><td class='num'>2026-04-16</td><td class='r num'>1.29</td><td class='r num'>1.29</td><td class='r num'>59</td><td class='num'>2026-04-17</td><td class='num' style='color:var(--faint)'>1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-04-23</td><td class='r num'>6</td><td class='r'><span class='up num'>+0.3%</span></td><td class='r'><span class='dn num'>-3.4%</span></td><td class='r'><span class='dn num'>-3.4%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCIIT</b></td><td><div class='nm'>Information Technology</div></td><td class='num'>2026-04-08</td><td class='r num'>1.46</td><td class='r num'>1.50</td><td class='r num'>80</td><td class='num'>2026-04-09</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-04-10</td><td class='r num'>3</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-0.4%</span></td><td class='r'><span class='dn num'>-0.3%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCIPC</b></td><td><div class='nm'>Properties &amp; Construction</div></td><td class='num'>2026-04-08</td><td class='r num'>1.32</td><td class='r num'>1.37</td><td class='r num'>58</td><td class='num'>2026-04-09</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-04-10</td><td class='r num'>3</td><td class='r'><span class='up num'>+0.5%</span></td><td class='r'><span class='dn num'>-0.2%</span></td><td class='r'><span class='up num'>+0.5%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCICS</b></td><td><div class='nm'>Consumer Staples</div></td><td class='num'>2026-04-01</td><td class='r num'>1.34</td><td class='r num'>1.34</td><td class='r num'>55</td><td class='num'>2026-04-02</td><td class='num' style='color:var(--faint)'>1→0→1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-04-17</td><td class='r num'>10</td><td class='r'><span class='up num'>+1.6%</span></td><td class='r'><span class='dn num'>-2.5%</span></td><td class='r'><span class='dn num'>-2.5%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCIH</b></td><td><div class='nm'>Healthcare</div></td><td class='num'>2026-04-01</td><td class='r num'>2.03</td><td class='r num'>1.97</td><td class='r num'>37</td><td class='num'>2026-04-02</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-05-15</td><td class='r num'>29</td><td class='r'><span class='up num'>+4.3%</span></td><td class='r'><span class='dn num'>-5.9%</span></td><td class='r'><span class='dn num'>-5.9%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCICD</b></td><td><div class='nm'>Consumer Discretionary</div></td><td class='num'>2026-03-16</td><td class='r num'>1.26</td><td class='r num'>1.34</td><td class='r num'>48</td><td class='num'>2026-03-17</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-03-18</td><td class='r num'>3</td><td class='r'><span class='up num'>+0.7%</span></td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='up num'>+0.7%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>HSCIT</b></td><td><div class='nm'>Telecommunications</div></td><td class='num'>2026-03-13</td><td class='r num'>1.07</td><td class='r num'>1.07</td><td class='r num'>55</td><td class='num'>2026-03-16</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-03-23</td><td class='r num'>7</td><td class='r'><span class='up num'>+0.1%</span></td><td class='r'><span class='dn num'>-3.1%</span></td><td class='r'><span class='dn num'>-3.1%</span></td><td><span class="badge b-cy">V2</span></td></tr></table></div><div class="sec"><i></i><b>硬資產 HARD</b> // 4 條紀錄 · HOLDING 0 · INVALID 4 · 生成 2026-09-14 10:31:06</div><div class="twrap"><table class="dt"><tr><th>代號</th><th>板塊名稱</th><th>觸發日</th><th class="r">觸發價</th><th class="r">觸發SMA50</th><th class="r">Radar分</th><th>轉HOLDING</th><th>失效監察</th><th>狀態</th><th>INVALID日</th><th class="r">持續日數</th><th class="r">期內最高</th><th class="r">期內最深</th><th class="r">最終回報</th><th>版本</th></tr><tr><td class='num w'><b>IBIT</b></td><td><div class='nm'>Bitcoin</div></td><td class='num'>2026-07-21</td><td class='r num'>37.67</td><td class='r num'>38.32</td><td class='r num'>87</td><td class='num'>2026-07-22</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-07-23</td><td class='r num'>3</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-2.7%</span></td><td class='r'><span class='dn num'>-2.7%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>GLD</b></td><td><div class='nm'>Gold</div></td><td class='num'>2026-04-14</td><td class='r num'>445.1</td><td class='r num'>450.0</td><td class='r num'>90</td><td class='num'>2026-04-15</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-04-16</td><td class='r num'>3</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-1.1%</span></td><td class='r'><span class='dn num'>-1.1%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>IBIT</b></td><td><div class='nm'>Bitcoin</div></td><td class='num'>2026-03-16</td><td class='r num'>41.94</td><td class='r num'>44.14</td><td class='r num'>63</td><td class='num'>2026-03-17</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-03-18</td><td class='r num'>3</td><td class='r'><span class='up num'>+0.8%</span></td><td class='r'><span class='dn num'>-4.0%</span></td><td class='r'><span class='dn num'>-4.0%</span></td><td><span class="badge b-cy">V2</span></td></tr><tr><td class='num w'><b>IBIT</b></td><td><div class='nm'>Bitcoin</div></td><td class='num'>2026-01-05</td><td class='r num'>53.46</td><td class='r num'>53.74</td><td class='r num'>96</td><td class='num'>2026-01-06</td><td class='num' style='color:var(--faint)'>1→2</td><td><span class="badge" style="border-color:rgba(240,51,75,.5);color:#f0808c;background:rgba(240,51,75,.06)">INVALID 已失效</span></td><td class='num'>2026-01-07</td><td class='r num'>3</td><td class='r'><span class='flat num'>0.0%</span></td><td class='r'><span class='dn num'>-3.6%</span></td><td class='r'><span class='dn num'>-3.6%</span></td><td><span class="badge b-cy">V2</span></td></tr></table></div>
+<div class="foot">狀態說明：HOLDING = 訊號持續有效中；INVALID = 已失效（連續兩個交易日收低於各自當日 SMA50 先失效；觸發當日唔計，收回線上計數即歸零）。
+INVALID 只係失效當日嘅狀態 —— 之後板塊返回 WAITING 等下一個訊號。日數 / 最高 / 最深 / 回報以觸發價計，計到失效日（HOLDING 計到而家）。<br>
+數據：Yahoo Finance，僅供參考。 · 呢頁係初版（Phase 2B 再完善）。</div>
+</div></body></html>
