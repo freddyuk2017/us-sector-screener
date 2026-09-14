@@ -32,6 +32,10 @@ letter-spacing:.16em;margin-top:6px}
 background:var(--panel);color:var(--dim);text-decoration:none;font-size:14px;
 letter-spacing:.12em;border-radius:4px}
 .tabs a.on{color:#0a0c0e;background:var(--cy);border-color:var(--cy);font-weight:700}
+/* v3.7：tab 視覺分層 —— 三個反彈雷達主頁做主角款，附加參考/教學/紀錄收細收暗 */
+.tabs a.pri{color:var(--txt);border-color:rgba(34,211,238,.45);font-weight:600}
+.tabs a.pri.on{color:#0a0c0e;background:var(--cy);border-color:var(--cy);font-weight:700}
+.tabs a.sub{font-size:12px;padding:8px 14px;min-width:0;color:var(--faint);letter-spacing:.06em}
 /* v3.6：策略聲明行（市場頁 nav 下面，一句講清楚係咩策略 + 導去 STRONG） */
 .stratline{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:6px;
 background:var(--panel);padding:8px 14px;margin:10px 0 4px;letter-spacing:.04em;line-height:1.7}
@@ -340,7 +344,7 @@ padding:12px 10px;text-align:center}
   <div class="meta-line" id="metaline">數據截至 2026-09-11 收市 · 更新 2026-09-14 10:26:22 · 策略 SMA50_PREV_CLOSE_TV_CHOCH_V2</div>
 </header>
 <div id="sumb"></div>
-<div class="tabs"><a href="index.html" class="">美股 US</a><a href="hk.html" class="">港股 HK</a><a href="gold.html" class="">硬資產 HARD</a><a href="strong.html" class="">強勢 STRONG</a><a href="guide.html" class="on">教學 GUIDE</a><a href="history.html" class="">紀錄 HIST</a></div>
+<div class="tabs"><a href="index.html" class="pri ">美股 US</a><a href="hk.html" class="pri ">港股 HK</a><a href="gold.html" class="pri ">硬資產 HARD</a><a href="strong.html" class="sub ">附加參考：強勢</a><a href="guide.html" class="sub on">教學 GUIDE</a><a href="history.html" class="sub ">紀錄 HIST</a></div>
 
 <div id="guide"></div>
 <div id="golddash"></div>
@@ -952,7 +956,7 @@ function renderStrong(){
     box.innerHTML='<div class="panel" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
       +'<span style="font-size:12.5px;color:var(--dim)">強勢板塊（SMA50 之上 · <b style="color:#FF8C1A">順勢參考</b>，唔係反彈雷達）<b class="num" style="color:#FF8C1A"> '
       +wallSecs.length+'</b> 個</span>'
-      +'<a href="strong.html" style="margin-left:auto;color:var(--cy);font-size:12.5px;text-decoration:none">強勢板塊 STRONG →</a></div>';
+      +'<a href="strong.html" style="margin-left:auto;color:var(--cy);font-size:12.5px;text-decoration:none">附加參考：強勢 →</a></div>';
     return;
   }
   if(!wallSecs.length){
