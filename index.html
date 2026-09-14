@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<title>美股板塊輪動</title><style>
+<title>反彈雷達 · 美股 US</title><style>
 :root{--bg:#0a0c0e;--panel:#12151a;--panel2:#0d1013;--line:#232830;--up:#26a769;--dn:#f0334b;
 --txt:#d7dde6;--dim:#7a8494;--faint:#59626f;--cy:#22d3ee;--am:#f0a030;--pp:#b78cf7}
 *{box-sizing:border-box;margin:0}
@@ -32,6 +32,11 @@ letter-spacing:.16em;margin-top:6px}
 background:var(--panel);color:var(--dim);text-decoration:none;font-size:14px;
 letter-spacing:.12em;border-radius:4px}
 .tabs a.on{color:#0a0c0e;background:var(--cy);border-color:var(--cy);font-weight:700}
+/* v3.6：策略聲明行（市場頁 nav 下面，一句講清楚係咩策略 + 導去 STRONG） */
+.stratline{font-size:12px;color:var(--dim);border:1px solid var(--line);border-radius:6px;
+background:var(--panel);padding:8px 14px;margin:10px 0 4px;letter-spacing:.04em;line-height:1.7}
+.stratline a{color:var(--cy);text-decoration:none}
+.stratline a:hover{text-decoration:underline}
 /* ---- section title ---- */
 .sec{margin:36px 0 14px;font-size:13px;letter-spacing:.18em;color:var(--dim);
 font-family:Consolas,Menlo,monospace}
@@ -329,13 +334,14 @@ padding:12px 10px;text-align:center}
 </style></head><body>
 <div class="wrap">
 <header class="hd">
-  <div class="brand"><b>&#9632;</b> BOARD PULSE // 美股板塊輪動</div>
+  <div class="brand"><b>&#9632;</b> BOARD PULSE // 反彈雷達 · 美股 US</div>
   <div class="clock" id="clock">--:--:--</div>
   <div class="cdate" id="cdate"></div>
   <div class="meta-line" id="metaline">數據截至 2026-09-11 收市 · 更新 2026-09-14 10:26:22 · 策略 SMA50_PREV_CLOSE_TV_CHOCH_V2</div>
 </header>
 <div id="sumb"></div>
 <div class="tabs"><a href="index.html" class="on">美股 US</a><a href="hk.html" class="">港股 HK</a><a href="gold.html" class="">硬資產 HARD</a><a href="strong.html" class="">強勢 STRONG</a><a href="guide.html" class="">教學 GUIDE</a><a href="history.html" class="">紀錄 HIST</a></div>
+<div class="stratline">反彈部署雷達 // 喺 SMA50 之下搵由弱轉強嘅板塊 · ChoCH 觸發入場 · 雙日確認失效 · 順勢板塊請睇 <a href="strong.html">強勢 STRONG →</a></div>
 <div id="guide"></div>
 <div id="golddash"></div>
 <div id="sigsec"></div>
