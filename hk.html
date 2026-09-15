@@ -1164,6 +1164,14 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
       sma50.push(i0>=49?s50/50:null);
     }
     var preClose=null,win=opts.win||120;
+    /* v3.8：endTrim = 先切走最後 N 支再套用 win（教學幕② zoom 觸發段用）。
+       SMA50 已喺完整數列計好，切尾唔影響線值；冇傳 endTrim 行為完全不變 */
+    var trim=opts.endTrim|0;
+    if(trim>0&&rows.length>trim){
+      rows=rows.slice(0,rows.length-trim);
+      closes=closes.slice(0,rows.length);
+      if(sma50)sma50=sma50.slice(0,rows.length);
+    }
     if(rows.length>win){
       var off=rows.length-win;
       preClose=rows[off-1][4];
@@ -1334,6 +1342,54 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
       ctx.fillStyle="#d7dde6";ctx.fillText(text,bx+7,by+bh2/2);
       ctx.fillStyle=ac2;ctx.beginPath();ctx.arc(px,py,2,0,6.2832);ctx.fill();
     };
+    /* v3.8：annot.level={price,label,label2,chipBelow,color,pivotDate,pivotLabel} ——
+       ChoCH 前擺動高點層：該價位全寬霓虹虛線 + 左側 label chip（label2 有就雙行；
+       chipBelow 放線下，否則線上）；pivotDate 有就喺被升穿嗰支擺動高點蠟燭頂加同色
+       ▼ + 細 label（放 ▼ 左邊同行，讀落「label ▼」；同色 = 視覺連繫）。
+       冇傳 level 完全唔畫，行為不變 */
+    if(an2.level&&an2.level.price!=null){
+      var lv=an2.level,lc=lv.color||acc,lvy=y(lv.price);
+      if(lvy>padT+2&&lvy<pBot-2){
+        ctx.strokeStyle=lc;ctx.lineWidth=1.2;ctx.setLineDash([7,5]);
+        ctx.shadowColor=lc;ctx.shadowBlur=5;
+        ctx.beginPath();ctx.moveTo(padL,lvy);ctx.lineTo(W-padR,lvy);ctx.stroke();
+        ctx.shadowBlur=0;ctx.setLineDash([]);ctx.lineWidth=1;
+        if(lv.label){
+          ctx.font="10px Consolas,Menlo,monospace";ctx.textBaseline="middle";
+          var lns=lv.label2?[lv.label,lv.label2]:[lv.label];
+          var lw2=0;
+          for(var i8=0;i8<lns.length;i8++)lw2=Math.max(lw2,ctx.measureText(lns[i8]).width);
+          lw2+=12;
+          var lh2=lns.length>1?30:16;
+          var lbx=padL+4,lby=lv.chipBelow?(lvy+4):(lvy-lh2-3);
+          lby=Math.max(padT+2,Math.min(pBot-lh2-2,lby));
+          ctx.fillStyle="rgba(13,16,20,.92)";ctx.fillRect(lbx,lby,lw2,lh2);
+          ctx.strokeStyle=lc;ctx.strokeRect(lbx+.5,lby+.5,lw2-1,lh2-1);
+          ctx.fillStyle=lc;
+          for(var i9=0;i9<lns.length;i9++)
+            ctx.fillText(lns[i9],lbx+6,lby+8+i9*14+(lns.length>1?0:lh2/2-8));
+        }
+        if(lv.pivotDate){
+          var pvi=-1;
+          for(var i7=0;i7<rows.length;i7++)if(rows[i7][0]===lv.pivotDate){pvi=i7;break}
+          if(pvi>=0){
+            var ph=(bars&&bars[pvi]&&bars[pvi][2]!=null)?bars[pvi][2]:closes[pvi];
+            var pvx=x(pvi),pvy=Math.max(padT+9,y(ph)-9);
+            ctx.fillStyle=lc;ctx.beginPath();
+            ctx.moveTo(pvx-4.5,pvy-3);ctx.lineTo(pvx+4.5,pvy-3);ctx.lineTo(pvx,pvy+3.5);
+            ctx.closePath();ctx.fill();
+            if(lv.pivotLabel){
+              ctx.font="10px Consolas,Menlo,monospace";
+              var pw=ctx.measureText(lv.pivotLabel).width;
+              var ptx=pvx-8-pw;
+              if(ptx<padL+2)ptx=pvx+8;   /* pivot 太貼左邊就放 ▼ 右側 */
+              ptx=Math.min(ptx,W-padR-pw-2);
+              ctx.fillStyle=lc;ctx.fillText(lv.pivotLabel,ptx,pvy-1);
+            }
+          }
+        }
+      }
+    }
     if(cross2>0&&(an2.crossUp||an2.crossDown))
       tag(x(cross2),y(sma50[cross2]),
           closes[cross2]>=sma50[cross2]?an2.crossUp:an2.crossDown,true);
@@ -1805,6 +1861,43 @@ if(ISGUIDE)(function(){
     return{rows:[],ew:false};
   }
   var hD=sigRows(hkey),iD=sigRows(ikey);
+  /* v3.8 幕②：JS 鏡射 structure_engine.py replay(length=5) —— fractal p=2
+     （中間支 high/low 嚴格高/低過左右各 2 支 + 5 支窗口極值）追蹤 upper/lower 擺動點，
+     收市升穿未 crossed 嘅 upper（昨收 ≤ 之前 upper）= 向上 break，bias -1 → ChoCH。
+     搵觸發日嗰個向上 break 攞 level + pivot 日期；數據冇 high（EW 合成線）或搵唔到，
+     就用 Python 已計好嘅 breakoutLevel 畫虛線（冇 pivot 標記）。唔改任何判定，純視覺 */
+  function chochTrig(rows,trigDate,fbLevel){
+    var fb=fbLevel!=null?{level:fbLevel,pivotDate:null}:null;
+    var n=rows.length,i,j;
+    if(n<12||!trigDate)return fb;
+    var H=[],L=[],C=[];
+    for(i=0;i<n;i++){
+      if(rows[i][2]==null||rows[i][3]==null)return fb;
+      H.push(rows[i][2]);L.push(rows[i][3]);C.push(rows[i][4]);
+    }
+    var p=2,up=null,lo=null,bias=0,tiX=-1;
+    for(i=0;i<n;i++)if(rows[i][0]===trigDate){tiX=i;break}
+    if(tiX<0)return fb;
+    function ds(V,e){var s=0;for(var j2=e-p+1;j2<=e;j2++)s+=(V[j2]>V[j2-1]?1:0)-(V[j2]<V[j2-1]?1:0);return s}
+    for(i=0;i<=tiX;i++){
+      var pUp=up?up.price:null,pLo=lo?lo.price:null;
+      if(i>=4){
+        var k=i-p,bull=ds(H,i)===-p&&ds(H,i-p)===p,bear=ds(L,i)===p&&ds(L,i-p)===-p;
+        if(bull)for(j=i-4;j<=i;j++)if(H[j]>H[k]){bull=false;break}
+        if(bear)for(j=i-4;j<=i;j++)if(L[j]<L[k]){bear=false;break}
+        if(bull)up={price:H[k],date:rows[k][0],crossed:false};
+        if(bear)lo={price:L[k],date:rows[k][0],crossed:false};
+      }
+      if(i&&up&&pUp!=null&&!up.crossed&&C[i]>up.price&&C[i-1]<=pUp){
+        var ev={level:up.price,pivotDate:up.date};
+        up.crossed=true;bias=1;
+        if(i===tiX)return ev;
+      }else if(i&&lo&&pLo!=null&&!lo.crossed&&C[i]<lo.price&&C[i-1]>=pLo){
+        lo.crossed=true;bias=-1;
+      }
+    }
+    return fb;
+  }
   /* 幕③ zoom：切到最後一次失效監察日之後 5 日，再畫最後 55 日 */
   var hch=holdSig.countHistory||[];
   var lastWatch=hch.length?hch[hch.length-1][0]:holdSig.triggerDate;
@@ -1815,6 +1908,14 @@ if(ISGUIDE)(function(){
   var ti=-1;
   for(var i6=0;i6<hD.rows.length;i6++)if(hD.rows[i6][0]===holdSig.triggerDate){ti=i6;break}
   var post20=hD.rows.length?hD.rows[Math.min(ti>=0?ti+20:0,hD.rows.length-1)][0]:holdSig.triggerDate;
+  /* v3.8 幕② zoom：觸發前 35 支 → 觸發後 15 支（hD.rows 覆蓋唔夠就用可得範圍）；
+     用 drawPanel endTrim 切尾 + win 限長，SMA50 照用完整數列計，線值唔變 */
+  var PRE2=35,POST2=15;
+  var wEnd2=ti>=0?Math.min(hD.rows.length-1,ti+POST2):hD.rows.length-1;
+  var wStart2=ti>=0?Math.max(0,ti-PRE2):Math.max(0,hD.rows.length-51);
+  var win2=wEnd2-wStart2+1,trim2=hD.rows.length-1-wEnd2;
+  var wD0=hD.rows.length?hD.rows[wStart2][0]:"",wD1=hD.rows.length?hD.rows[wEnd2][0]:"";
+  var cho2=chochTrig(hD.rows,holdSig.triggerDate,holdSig.breakoutLevel);
   /* 幕③ 火焰錶：HOLDING 板塊而家強度 */
   var hStr=null;
   (D.sectors||[]).forEach(function(s){if(s.etf===hkey)hStr=s.strength});
@@ -1824,10 +1925,12 @@ if(ISGUIDE)(function(){
   /* 四幕標註 marks（⚡=觸發 · 1/2=失效監察日 · ✓=收返上） */
   var marks2=[
     {date:holdSig.triggerDate,glyph:"⚡",accent:"#22d3ee",at:"bottom",
-     text:"ChoCH 轉強 = 入場點 "+holdSig.triggerDate.slice(5)},
+     text:"收市升穿前高 = ChoCH 轉強 "+holdSig.triggerDate.slice(5)},
     {date:post20,accent:"#FF8C1A",at:"bottom",
      text:"之後 "+(holdSig.durationDays||0)+" 日 "+fp(holdSig.signalReturnPct)
        +" · 最高 "+fp(holdSig.maxGainPct)}];
+  /* v3.8：幕② zoom 咗入觸發段，window 外嘅 callout 拎走（旅程全貌睇幕③） */
+  marks2=marks2.filter(function(m){return m.date>=wD0&&m.date<=wD1});
   var marks3=[];
   hch.forEach(function(c){
     if(c[1]===1)marks3.push({date:c[0],glyph:"1",accent:"#f0a030",at:"top",
@@ -1876,16 +1979,16 @@ if(ISGUIDE)(function(){
     +' · K 線 = 價（綠升紅跌）· 琥珀線 = SMA50 · 近 90 日</div>'
   +'</div>'
 
-  /* 幕② 入 // TURNING · ChoCH 觸發 = 入場（HOLDING 訊號全旅程圖） */
+  /* 幕② 入 // TURNING · ChoCH 觸發 = 入場（v3.8：zoom 觸發段 + 前擺動高點虛線標註） */
   +'<div class="gdcard">'
   +'<div class="gd-h" style="color:#22d3ee">② 入 // TURNING · ChoCH 觸發 = 入場<span class="gd-tag">TURNING 只維持觸發當日 · 見到 ⚡ 嗰日就係入場日</span></div>'
   +'<div class="gd-def">觸發條件：<b>昨日收市 &lt; 昨日 SMA50</b>，兼<b>今日收市確認 TV 向上 ChoCH</b>（length=5；BOS 唔算）。訊號日可以仍低於 SMA50，唔使等企返上線先郁。</div>'
   +'<div class="gd-grid"><div>'
-  +'<div class="gd-sub">下圖點睇（'+esc(hkey)+' 真實訊號）</div>'
+  +'<div class="gd-sub">下圖點睇（'+esc(hkey)+' 真實訊號 · zoom 觸發段）</div>'
   +'<ul class="gd-ul">'
-  +'<li>冷色影 = 線下「等」嘅日子；⚡ 之後橙色影 = 線上「坐」嘅日子</li>'
-  +'<li>一張圖睇晒「等 → 入 → 坐」嘅完整旅程</li>'
-  +'<li>觸發後下一交易日自動轉 HOLDING，失效計數歸零</li>'
+  +'<li>品紅虛線 = <b>前擺動高點</b>：▼ 嗰支係 len=5 fractal 擺動高點（high 係左右 5 支入面最高）</li>'
+  +'<li><b>收市升穿虛線 = ChoCH 轉強入場</b>（⚡ 嗰日）—— 之前係跌勢，第一次升穿前高先算；BOS（延續再升穿）唔算</li>'
+  +'<li>觸發後下一交易日自動轉 HOLDING，失效計數歸零；之後嘅旅程全貌睇幕③</li>'
   +'</ul>'
   +'</div><div>'
   +'<div class="gd-demo"><span class="gd-live">真實訊號 · 進行中 HOLDING</span>'
@@ -1895,8 +1998,9 @@ if(ISGUIDE)(function(){
     +'期內最高 <b class="num up">'+fp(holdSig.maxGainPct)+'</b> · 最深 <b class="num '+cls(holdSig.maxDropPct)+'">'+fp(holdSig.maxDropPct)+'</b></div></div>'
   +'</div></div>'
   +'<canvas id="gdchart2" class="gd-kline"></canvas>'
-  +'<div class="gd-cap" style="text-align:center">真實數據：<b>'+esc(hkey)+'</b>（HOLDING 進行中）· 觸發 '+esc((holdSig.triggerDate||"").slice(5))
-    +' · 冷色影 = 線下等 / 橙色影 = 線上坐 · 近 120 日</div>'
+  +'<div class="gd-cap" style="text-align:center">真實數據：<b>'+esc(hkey)+'</b>（HOLDING 進行中）· zoom 觸發段 '
+    +esc(wD0.slice(5))+' → '+esc(wD1.slice(5))
+    +' · 品紅虛線 = 前擺動高點 · 收市升穿佢 = ChoCH 轉強 · 完整旅程睇幕③</div>'
   +'</div>'
 
   /* 幕③ 坐 // HOLDING 訊號有效（失效監察段 zoom） */
@@ -1989,8 +2093,10 @@ if(ISGUIDE)(function(){
   +'</div></div></div>';
   $("guide").innerHTML=h;
   /* v3.5：四幕四張真實 K 線 —— 全部重用 drawPanel indexS 模式 + annot 標註層：
-     幕① XLU 線下冷色影 + 而家/交叉 callout；幕② XLE 120 日雙色影 + ⚡入場 + 旅程 callout；
-     幕③ XLE zoom 55 日失效監察段 + ①/✓ marks；幕④ INT EW 合成 K 線 + ⚡/①/② marks */
+     幕① XLU 線下冷色影 + 而家/交叉 callout；幕③ XLE zoom 55 日失效監察段 + ①/✓ marks；
+     幕④ INT EW 合成 K 線 + ⚡/①/② marks
+     v3.8：幕② zoom 觸發段（前 35 → 後 15 支，endTrim 切尾）+ annot.level 品紅虛線
+     畫前擺動高點 + ▼ pivot 標記 + ⚡「收市升穿前高 = ChoCH 轉強」 */
   requestAnimationFrame(function(){
     drawPanel($("gdchart1"),(D.indexCharts||{})[g1key]||[],"indexS",
       {h:260,win:90,tag:"▮ 價",
@@ -1998,8 +2104,11 @@ if(ISGUIDE)(function(){
          now:"而家：距線 "+pct(ws.dist)+" · 貼線中",
          crossDown:"跌破 SMA50 = 轉弱起點",crossUp:"升穿 SMA50 = 轉強"}});
     drawPanel($("gdchart2"),hD.rows,"indexS",
-      {h:260,win:120,tag:"▮ 價",
+      {h:260,win:win2,endTrim:trim2,tag:"▮ 價",
        annot:{shade:"both",color:"126,142,247",colorAbove:"255,140,26",accent:"#22d3ee",
+         level:cho2?{price:cho2.level,color:"#ff3df2",
+           label:"前擺動高點",label2:priceFmt(cho2.level),chipBelow:true,
+           pivotDate:cho2.pivotDate,pivotLabel:"len=5 擺動高點"}:null,
          marks:marks2}});
     drawPanel($("gdchart3"),hZoom,"indexS",
       {h:260,win:55,tag:"▮ 價",
