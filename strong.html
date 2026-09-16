@@ -1367,8 +1367,16 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
     (opts.annot.marks||[]).forEach(function(m){
       var mi=-1;
       for(var i4=0;i4<rows.length;i4++)if(rows[i4][0]===m.date){mi=i4;break}
-      if(mi<0)return;
+      var edgeC=false;
+      if(mi<0){
+        /* v4.2：m.edge 兼日期新過圖表最後一支（訊號日新過圖表數據，例如引擎已更新
+           但圖表仲係上個交易日）→ 夾去右邊緣畫，label 照寫真日期；
+           冇 flag 嘅舊 marks 維持 miss 即走（教學頁 zoom 窗外拎走靠呢個行為） */
+        if(m.edge&&rows.length&&m.date>rows[rows.length-1][0]){mi=rows.length-1;edgeC=true}
+        else return;
+      }
       var ac3=m.accent||accA,cx2=x(mi);
+      if(edgeC)cx2=Math.min(x(mi)+iw/rows.length,W-padR-1);   /* 最後一支之後一格位，唔出框 */
       if(m.vline){
         ctx.strokeStyle=ac3;ctx.setLineDash([5,4]);ctx.lineWidth=1;
         ctx.beginPath();ctx.moveTo(cx2,padT);ctx.lineTo(cx2,pBot);ctx.stroke();ctx.setLineDash([]);
@@ -1377,7 +1385,7 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
         var gy=padT+10;
         if(!m.vline){
           var hi2=(bars&&bars[mi]&&bars[mi][2]!=null)?bars[mi][2]:(rows[mi][2]!=null?rows[mi][2]:closes[mi]);
-          gy=Math.max(padT+10,y(hi2)-12);
+          gy=Math.max(padT+10,y(hi2)-12-(m.dy||0));   /* v4.2：dy 向上錯層（①② 相鄰日唔疊）；冇傳=0 行為不變 */
         }
         ctx.textBaseline="middle";ctx.textAlign="center";
         if(/^[0-9]$/.test(m.glyph)){
@@ -1394,18 +1402,40 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
     });
   }
 }
-/* v3.9：drill-down 訊號開始日標註 —— 板塊有 active V2 訊號（TURNING/HOLDING）先畫；
+/* v3.9：drill-down 訊號開始日標註 —— 板塊最新 V2 訊號係 TURNING/HOLDING/INVALID 先畫；
    日期用 holdingSince||startDate，同卡面「ChoCH 訊號 X 開始」嗰個一致；
-   冇 active 訊號（WAITING/INVALID/冇紀錄）回 null → drawPanel 行為同舊版一樣 */
+   冇訊號紀錄（WAITING/冇紀錄）回 null → drawPanel 行為同舊版一樣。
+   v4.2：INVALID 唔再乜都冇 —— 開始 ⚡ 青線保留 + 失效 ✕ 紅線（invalidDate）
+   + ①② 跌穿標記（countHistoryV2 最尾嗰段 count=1→2 嗰兩日，一眼睇到點解失效）。
+   紀錄仲喺板塊 JSON（未被新訊號覆蓋）線就一直出；新 TURNING 會自然切返新訊號顯示。 */
 function sigStartAnnot(key){
   var t=turnOf(key),s=stateV2Of(t);
-  if(s!=="TURNING"&&s!=="HOLDING")return null;
+  if(s!=="TURNING"&&s!=="HOLDING"&&s!=="INVALID")return null;
   /* v4.1：gold 頁錨觸發日 startDate（用戶口徑「訊號開始 08-05」= 觸發當日）；
      US/HK 維持 holdingSince 唔變 */
   var d0=ISG?(t.startDate||t.holdingSince):(t.holdingSince||t.startDate);
   if(!d0)return null;
-  return{annot:{accent:"#22d3ee",marks:[{date:d0,glyph:"⚡",accent:"#22d3ee",
-    vline:true,at:"bottom",text:"訊號開始 "+d0.slice(5)}]}};
+  var marks=[{date:d0,glyph:"⚡",accent:"#22d3ee",
+    vline:true,at:"bottom",text:"訊號開始 "+d0.slice(5)}];
+  if(s==="INVALID"){
+    /* 失效紅線：invalidDate 嗰日 ✕ glyph + 「失效 MM-DD」
+       （edge:true —— 失效日多數新過圖表最後交易日，夾右邊緣照畫） */
+    var ivd=t.invalidDate;
+    if(ivd)marks.push({date:ivd,glyph:"✕",accent:"#f0334b",
+      vline:true,at:"bottom",text:"失效 "+ivd.slice(5),edge:true});
+    /* ①②：countHistoryV2 [[date,count],...] 尾段向前掃 —— 最尾 count=2 嗰日係 ②（紅），
+       佢之前最近嘅 count=1 嗰日係 ①（琥珀）；中途歸零嘅舊 ① 唔出（唔係呢次失效嘅原因）。
+       ② dy:18 向上錯一層 —— ①② 多數係相鄰交易日，120 日圖 stepx 得兩三個 px */
+    var ch=t.countHistoryV2||[],d2=null,d1=null;
+    for(var ci=ch.length-1;ci>=0;ci--){
+      if(d2==null&&ch[ci][1]===2){d2=ch[ci][0];continue}
+      if(d2!=null&&ch[ci][1]===1){d1=ch[ci][0];break}
+    }
+    if(d1)marks.push({date:d1,glyph:"1",accent:"#f0a030",edge:true});
+    if(d2)marks.push({date:d2,glyph:"2",accent:"#f0334b",dy:18,edge:true,
+      text:"兩日收低 → INVALID"});
+  }
+  return{annot:{accent:"#22d3ee",marks:marks}};
 }
 function drawChart(){
   if(!curStocks.length){drawPanel($("chart"),[],"stock");return}
