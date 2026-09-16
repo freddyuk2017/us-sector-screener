@@ -381,13 +381,14 @@ var CN={"Energy":"能源","Communication Services":"通訊服務","Materials":"�
 "Properties & Construction":"地產建築","Consumer Goods":"消費品","Conglomerates":"綜合企業",
 "Transportation":"交通運輸","Telecommunications":"電訊","Commerce & Trade":"商貿",
 "Hardware":"硬件","Software":"軟件","Semiconductors":"半導體","Internet":"互聯網"};
-/* v1.9：XLK 退役 —— 科技四子（SEMI/SOFT/HW/INT）升做正式板塊取代佢。
-   v4.0：XLK 部分回歸 —— 雷達 / 強勢排名 / 摘要帶都出返 XLK；
-   RETIRED 而家淨係擋訊號卡區（科技訊號照舊由四細分代表），drill 代理圖安排唔郁。 */
-var RETIRED={XLK:1};
-/* 四子代號表（Top5 表 badge / 強勢行 badge 用）；label 嚟自 D.techGroups。 */
-var TECHCAT={};
-(DATA.techGroups||[]).forEach(function(g){if(g.cat)TECHCAT[g.cat]=1});
+/* v4.4：SEMI/SOFT/HW/INT 四細分板塊層退役 —— 科技得返 XLK（v1.9 嘅反向）。
+   四細分唔再出現喺雷達 / 強勢排名 / 訊號卡 / drill-down / history / 教學幕④；
+   引擎 techTurns 照計（呢度 TECH_TURNS 落閘唔掃），展示層全部擋晒；
+   細分身份降格做 XLK drill-down 個股嘅細分標籤（TECH_OF / TECH_LBL，冇 mapping 唔出）。 */
+var TECH4={SEMI:1,SOFT:1,HW:1,INT:1};
+var TECH_LBL={SEMI:"SEMI 半導體",SOFT:"SOFT 軟件",HW:"HW 硬件",INT:"INT 互聯網"};
+var TECH_OF={};
+(DATA.topPicks||[]).forEach(function(p){if(p&&TECH4[p.etf]&&!TECH_OF[p.ticker])TECH_OF[p.ticker]=p.etf});
 
 /* ---- helpers ---- */
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
@@ -451,7 +452,7 @@ if(ISG)(function(){
 /* ---- 五態轉強狀態（v1.2）: TURNING / HOLDING / 觀察（收<SMA50）/ 中性 / DATA_NOT_READY ----
    所有狀態以框色+badge 表達；除 badge「SMA50下 第N日」外唔寫 SMA50 方位文字。 */
 var SECT_TURNS=D.sectorTurns||{};
-var TECH_TURNS=D.techTurns||{};
+var TECH_TURNS={};   /* v4.4：四細分板塊層退役 —— 引擎照計，展示層落閘唔掃（雷達/訊號卡/摘要帶/幕①即刻冇四子） */
 function turnOf(key){return SECT_TURNS[key]||TECH_TURNS[key]||null}
 function turnState(t){
   if(!t)return"off";
@@ -775,7 +776,7 @@ function sigCard(r){ /* v3.0：V2 狀態驅動。TURNING/HOLDING/INVALID 三種�
 (function(){
   var turning=[],holding=[],invalid=[];
   Object.keys(SECT_TURNS).forEach(function(k){
-    if(RETIRED[k])return;   /* v1.9：訊號卡區維持唔出 XLK（v4.0 只放寬雷達/強勢排名） */
+    /* v4.4：RETIRED 退役 —— XLK 解封入訊號卡區（四細分唔再喺 SECT_TURNS，唔使擋） */
     var s=stateV2Of(SECT_TURNS[k]);
     if(s==="TURNING")turning.push({key:k,t:SECT_TURNS[k],tech:false});
     else if(s==="HOLDING")holding.push({key:k,t:SECT_TURNS[k],tech:false});
@@ -812,7 +813,6 @@ function sigCard(r){ /* v3.0：V2 狀態驅動。TURNING/HOLDING/INVALID 三種�
   if(ISG||ISGUIDE){box.style.display="none";return}
   var turningN=0,holding=[];
   Object.keys(SECT_TURNS).forEach(function(k){
-    if(RETIRED[k])return;
     var s=stateV2Of(SECT_TURNS[k]);
     if(s==="TURNING")turningN++;
     else if(s==="HOLDING")holding.push(SECT_TURNS[k]);
@@ -862,9 +862,8 @@ function sigCard(r){ /* v3.0：V2 狀態驅動。TURNING/HOLDING/INVALID 三種�
   box.innerHTML=h;
 })();
 
-/* ---- 強勢板塊 list（v1.9：10 SPDR + 4 科技細分混排 · XLK 退役） ----
-   淨係擺「企喺 SMA50 上」嘅中性板塊，按舊強度分（0-100）高→低；
-   四子同 SPDR 同權混排（強度尺差異見頁尾註釋），行尾火焰橙錶；
+/* ---- 強勢板塊 list（v4.4：11 SPDR · 四細分退役唔再混排） ----
+   淨係擺「企喺 SMA50 上」嘅中性板塊，按舊強度分（0-100）高→低；行尾火焰橙錶；
    每行：排名 + 板塊名 + ticker + 20日%（綠升紅跌）+ 270° 火焰速度錶；撳行開 drill-down。
    跌穿咗嘅上咗反彈雷達，TURNING/HOLDING 上咗訊號卡區。 */
 function heatBg(r,maxAbs){
@@ -875,11 +874,8 @@ function heatBg(r,maxAbs){
 /* v3.2：secs/wallSecs 砌法抽成 rebuildSecs()（strong 頁市場切換要重建） */
 var secs=[],wallSecs=[];
 function rebuildSecs(){
-  /* v4.0：XLK 回歸雷達/強勢排名（唔再 filter；訊號卡區維持唔出 XLK） */
+  /* v4.4：四細分板塊層退役 —— 雷達/強勢淨掃 SPDR（techGroups 唔再 push 入 secs） */
   secs=(D.sectors||[]).slice();
-  (D.techGroups||[]).forEach(function(g){
-    if(g.cat)secs.push({etf:g.cat,sector:g.label,strength:g.strength,ret1M:g.ret1M,x150:g.x150,tech:true,rank:g.rank});
-  });
   secs.sort(function(a,b){return b.strength-a.strength});
   wallSecs=secs.filter(function(s){
     var t=turnOf(s.etf);   /* 四子嘅狀態喺 TECH_TURNS，要用 turnOf */
@@ -981,7 +977,8 @@ function renderDetail(key){
     h+='<div class="twrap"><table class="dt"><tr><th>代號</th><th>名</th><th class="r">收市</th><th class="r">vs昨日</th>'
       +'<th class="r">評分</th><th class="r">corr</th><th class="r">成交額20D</th><th class="r">市值</th><th></th></tr>';
     r.picks.forEach(function(p){
-      h+="<tr><td class='num w'><b>"+esc(p.ticker)+"</b></td><td><div class='nm'>"+esc(p.name||"")+"</div></td>"
+      h+="<tr><td class='num w'><b>"+esc(p.ticker)+"</b></td><td><div class='nm'>"+esc(p.name||"")+"</div>"
+        +(key==="XLK"&&TECH_OF[p.ticker]?badge(TECH_LBL[TECH_OF[p.ticker]],"b-pp"):"")+"</td>"
         +"<td class='r num'>"+priceFmt(p.close)+"</td>"
         +"<td class='r num "+cls(p.vsT1)+"'>"+pct(p.vsT1)+"</td>"
         +"<td class='r num'>"+(p.score!=null?p.score.toFixed(1):"—")+"</td>"
@@ -1075,7 +1072,8 @@ function selectTab(i){
     +' 高 <span class="num">'+priceFmt(lr[2])+'</span>'
     +' 低 <span class="num">'+priceFmt(lr[3])+'</span>'
     +' 收 <span class="w num">'+priceFmt(lr[4])+"</span>"):"";
-  $("chinfo").innerHTML="<b>"+esc(st.ticker)+"</b> "+esc(st.name||"")+ohlc
+  $("chinfo").innerHTML="<b>"+esc(st.ticker)+"</b> "+esc(st.name||"")
+    +(curKey==="XLK"&&TECH_OF[st.ticker]?" "+badge(TECH_LBL[TECH_OF[st.ticker]],"b-pp"):"")+ohlc
     +' &nbsp;<span class="'+cls(chg)+'">'+pct(chg,2)+"</span> &nbsp;·&nbsp; 120日 · K線 · MA20";
   requestAnimationFrame(drawChart);
 }
@@ -1616,7 +1614,7 @@ function watchScore(key){
 }
 (function(){
   /* v3.0：雷達淨收「WAITING 兼收低於 SMA50」—— HOLDING 跌一日唔准上雷達（V2 雙日確認）
-     v4.0：XLK 回歸雷達排名（唔再 RETIRED；訊號卡區維持唔出 XLK） */
+     v4.4：四細分退役（TECH_TURNS 落閘，下面 loop 自然 no-op）；XLK 照掃 */
   var below=[];
   Object.keys(SECT_TURNS).forEach(function(k){
     if(turnState(SECT_TURNS[k])==="below"&&stateV2Of(SECT_TURNS[k])==="WAITING")
@@ -1630,7 +1628,6 @@ function watchScore(key){
   var NOTE_TOP="反彈雷達 = 收市跌穿咗當日 SMA50 · 等緊轉強訊號 · 留意值高→低排";
   var NOTE_FORMULA="留意值 = 50×期內最深（跌穿期最深收市偏離 SMA50 · -3% 起計 · -12% 計滿，深過唔扣分）+ 50×困日（連續收低於 SMA50 · 滿 20 日計滿）";
   var NOTE_STR="強勢板塊 = 收市企喺 SMA50 上 · 按舊強度分（0-100）高→低排";
-  if((D.techGroups||[]).length)NOTE_STR+=" · 科技細分為等權指數，強度尺與 SPDR 略有差異";
   var scored=[];
   below.forEach(function(r){var ws=watchScore(r.key);if(ws){r.ws=ws;scored.push(r)}});
   scored.sort(function(a,b){return b.ws.score-a.ws.score});
@@ -1760,7 +1757,7 @@ if(ISGUIDE)(function(){
   /* v3.5：四幕故事「等 → 入 → 坐 → 走」—— 全部動態真值：
      幕① 雷達第一名（WAITING 留意值最高，同首頁摘要帶同一邏輯）；
      幕②③ HOLDING 訊號（countHistory 有 1→0 失效監察轉折嘅優先，教學最完整）；
-     幕④ INVALID 訊號（科技細分 EW 指數優先，順便示範合成 K 線）。冇數據 fallback 固定值 */
+     幕④ INVALID 訊號（v4.4：最新失效日嘅 SPDR 紀錄，細分退役唔再用 EW）。冇數據 fallback 固定值 */
   var g1key="XLU",ws=watchScore("XLU")||{score:63,deep:-0.0539,days:33,capped:false};
   (function(){
     var best=null;
@@ -1780,7 +1777,7 @@ if(ISGUIDE)(function(){
   var SIGH=(typeof SIGHIST!=="undefined"&&SIGHIST)||[];
   function fp(v){return (v>=0?"+":"")+Number(v).toFixed(1)+"%"}
   function pickHolding(){
-    var cands=SIGH.filter(function(s){return s.status==="HOLDING"});
+    var cands=SIGH.filter(function(s){return s.status==="HOLDING"&&!TECH4[s.key]});   /* v4.4：細分退役，幕②③唔攞 */
     if(!cands.length)return null;
     var ww=cands.filter(function(s){
       var ch=s.countHistory||[];
@@ -1791,25 +1788,23 @@ if(ISGUIDE)(function(){
     return pool[pool.length-1];
   }
   function pickInvalid(){
-    var cands=SIGH.filter(function(s){return s.status==="INVALID"&&(s.countHistory||[]).length>=2});
+    /* v4.4：細分退役 —— 用最新失效日嘅 SPDR 紀錄（XLF 2026-09-15 係現成好例子） */
+    var cands=SIGH.filter(function(s){return s.status==="INVALID"&&!TECH4[s.key]&&(s.countHistory||[]).length>=2});
     if(!cands.length)return null;
-    var ew=cands.filter(function(s){return (D.techEwCharts||{})[s.key]});
-    var pool=ew.length?ew:cands;
-    pool.sort(function(a,b){return a.triggerDate<b.triggerDate?-1:1});
-    return pool[pool.length-1];
+    cands.sort(function(a,b){return (a.invalidDate||"")<(b.invalidDate||"")?-1:1});
+    return cands[cands.length-1];
   }
   var holdSig=pickHolding()||{key:"XLE",name:"Energy",triggerDate:"2026-07-13",
     holdingSince:"2026-07-14",triggerClose:56.74,triggerSma50:56.71,durationDays:44,
     maxGainPct:15.1,maxDropPct:-0.42,signalReturnPct:14.8,belowSMA50Count:0,
     countHistory:[["2026-07-15",1],["2026-07-16",0]]};
-  var invSig=pickInvalid()||{key:"INT",name:"Internet",triggerDate:"2026-09-02",
-    triggerClose:1.1608,invalidDate:"2026-09-08",durationDays:4,signalReturnPct:-1.77,
-    countHistory:[["2026-09-04",1],["2026-09-08",2]]};
+  var invSig=pickInvalid()||{key:"XLF",name:"Financials",triggerDate:"2026-04-08",
+    triggerClose:51.20,invalidDate:"2026-09-15",durationDays:111,signalReturnPct:11.0,
+    countHistory:[["2026-09-14",1],["2026-09-15",2]]};
   var hkey=holdSig.key,hnm=NAME[hkey]||holdSig.name||"";
   var ikey=invSig.key,inm=NAME[ikey]||invSig.name||"";
-  /* 訊號 K 線數據：科技細分必須用 techEwCharts 等權收市線（訊號判定嘅權威系列；
-     indexCharts 入面同 cat 嘅係代理 ETF，走勢唔同，會講錯故事）；
-     SPDR 就用 indexCharts 真 OHLC */
+  /* 訊號 K 線數據：v4.4 細分退役後 hkey/ikey 實為 SPDR —— 全走 indexCharts 真 OHLC；
+     ew 分支留返（dead but harmless，SIGH 已擋細分，render 唔會出 EW 字樣） */
   function sigRows(key){
     var ew=(D.techEwCharts||{})[key];
     if(ew&&ew.length)return{rows:ew.map(function(r){return [r[0],null,null,null,r[1],null]}),ew:true};
@@ -2059,7 +2054,7 @@ if(ISGUIDE)(function(){
   $("guide").innerHTML=h;
   /* v3.5：四幕四張真實 K 線 —— 全部重用 drawPanel indexS 模式 + annot 標註層：
      幕① XLU 線下冷色影 + 而家/交叉 callout；幕③ XLE zoom 55 日失效監察段 + ①/✓ marks；
-     幕④ INT EW 合成 K 線 + ⚡/①/② marks
+     幕④ SPDR INVALID 真 OHLC（v4.4：細分退役，唔再 EW 合成）+ ⚡/①/② marks
      v3.8：幕② zoom 觸發段（前 35 → 後 15 支，endTrim 切尾）+ annot.level 品紅虛線
      畫前擺動高點 + ▼ pivot 標記 + ⚡「收市升穿前高 = ChoCH 轉強」 */
   requestAnimationFrame(function(){
@@ -2117,7 +2112,7 @@ if(ISSTRONG)(function(){
     ISHK=(m==="HK");
     wl=D.watchlist||[];
     SECT_TURNS=D.sectorTurns||{};
-    TECH_TURNS=D.techTurns||{};
+    TECH_TURNS={};   /* v4.4：四細分退役，切市場都唔攞 */
     buildName();rebuildSecs();
     curKey=null;detailOrigin=null;$("detail").innerHTML="";
     renderStrong();
@@ -2180,7 +2175,10 @@ a11yFix();
 /* ---- ?drill=KEY 深鏈：直接打開某板塊嘅 drill-down（截圖驗證/分享連結用） ---- */
 (function(){
   var m=/[?&]drill=([A-Za-z0-9.^]+)/.exec(location.search||"");
-  if(m)toggleDetail(decodeURIComponent(m[1]),null);
+  if(!m)return;
+  var k=decodeURIComponent(m[1]);
+  if(TECH4[k])return;   /* v4.4：四細分 drill 深鏈退役 —— graceful 唔開（落返首頁） */
+  toggleDetail(k,null);
 })();
 })();
 </script>
