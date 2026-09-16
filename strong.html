@@ -60,17 +60,6 @@ box-shadow:0 0 16px rgba(34,211,238,.20),inset 0 0 16px rgba(34,211,238,.05);
 background:var(--panel);border-radius:6px;padding:18px 20px;margin-bottom:14px}
 .sig.missed{border-color:var(--line);box-shadow:none}
 .sig .meta2{font-size:12px;color:var(--dim);margin-top:8px;letter-spacing:.04em}
-/* ---- 倉位雷達 ---- */
-.sig.rd-red{border-color:var(--dn);
-box-shadow:0 0 16px rgba(240,51,75,.28),inset 0 0 16px rgba(240,51,75,.06)}
-.sig.rd-am{border-color:var(--am);box-shadow:0 0 12px rgba(240,160,48,.20)}
-.sig.rd-dim{border-color:var(--line);box-shadow:none}
-.rd-closed{margin-top:2px}
-.rd-closed summary{cursor:pointer;color:var(--dim);font-size:12px;
-letter-spacing:.1em;padding:10px 4px;list-style:none}
-.rd-closed summary:before{content:"▸ ";color:var(--faint)}
-.rd-closed[open] summary:before{content:"▾ "}
-.rd-closed summary:hover{color:var(--txt)}
 /* ---- treemap ---- */
 .tm{display:flex;flex-wrap:wrap;gap:6px}
 .tile{flex-grow:1;flex-basis:180px;min-height:124px;border:1px solid var(--line);
@@ -134,7 +123,7 @@ font-weight:700;flex:0 0 36px}
 .str-ret{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:15px}
 .str-lbl{font-size:10px;color:var(--faint);letter-spacing:.1em}
 .str-g{flex:0 0 88px}
-/* ---- 硬資產英雄格（v2.0 gold.html：GLD/IBIT 兩卡並排 · 強勢橙錶固定光 / 弱勢冷錶框光跟分數
+/* ---- 硬資產英雄格（v2.0 gold.html：GC=F/IBIT 兩卡並排 · 強勢橙錶固定光 / 弱勢冷錶框光跟分數
    · 大字狀態標籤 · mobile <768px 上下叠） ---- */
 .ghgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .ghcard{position:relative;border:1.5px solid var(--line);border-radius:6px;
@@ -250,9 +239,6 @@ color:var(--faint);letter-spacing:.08em;pointer-events:none}
 padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;letter-spacing:.06em;
 font-family:Consolas,Menlo,monospace;margin-bottom:12px}
 .dback:hover,.dback:focus-visible{border-color:var(--cy);color:var(--cy);outline:none}
-/* ---- v3.0 英雄格獨立區（TOP REBOUND WATCH） ---- */
-.herowrap{max-width:640px}
-.herowrap .ttile.hero{max-width:100%}
 /* ---- footer ---- */
 .foot{margin-top:44px;font-size:11px;color:var(--faint);line-height:1.9;
 border-top:1px solid var(--line);padding-top:18px;letter-spacing:.03em}
@@ -349,8 +335,6 @@ padding:12px 10px;text-align:center}
 <div id="guide"></div>
 <div id="golddash"></div>
 <div id="sigsec"></div>
-<div id="hero"></div>
-<div id="holdsec"></div>
 <div class="sec" id="sec_wl"><i></i><b>等待確認的板塊</b> // WAITING RADAR</div>
 <div id="wl"></div>
 <div class="sec" id="sec_str"><i></i><b>強勢板塊</b> // SMA50之上</div>
@@ -360,7 +344,6 @@ padding:12px 10px;text-align:center}
 <div class="sec" id="sec_top"><i></i><b>候選股 TOP 5</b> // 全部 12 行業 · 各 5 隻 · 評分：市值70/成交30（ⓘ 睇拆細）· 訊號板塊排前展開，其餘撳開睇</div>
 <div id="top"></div>
 <div id="btcdash"></div>
-<div id="radar"></div>
 <div id="scorenote"></div>
 <div class="foot">強勢板塊 = 最新收市企喺各自當日 SMA50 之上（V2 訊號板塊 TURNING/HOLDING 唔喺度，佢哋喺首頁訊號卡區）。呢頁屬順勢參考，唔係反彈雷達；強勢板塊排名按舊強度分（0-100）高→低，同 drill-down 嘅全板塊綜合排名係兩套唔同排名。個股評分 = 市值70/成交30（板塊/行業內分位）；corr20 只供參考。宇宙：美股 S&amp;P500 + 納指100；港股 HSCI 531 隻（市值加權行業指數）。<br>數據：Yahoo Finance，僅供參考。 · 生成 2026-09-16 08:36:21</div>
 </div>
@@ -381,8 +364,9 @@ var CN={"Energy":"能源","Communication Services":"通訊服務","Materials":"�
 "Properties & Construction":"地產建築","Consumer Goods":"消費品","Conglomerates":"綜合企業",
 "Transportation":"交通運輸","Telecommunications":"電訊","Commerce & Trade":"商貿",
 "Hardware":"硬件","Software":"軟件","Semiconductors":"半導體","Internet":"互聯網"};
-/* v1.9：XLK 退役 —— 科技四子（SEMI/SOFT/HW/INT）升做正式板塊取代佢；
-   雷達 / 強勢 list / Top5 表 / 訊號卡都唔再出 XLK，淨係 drill-down 代理圖標註會見到。 */
+/* v1.9：XLK 退役 —— 科技四子（SEMI/SOFT/HW/INT）升做正式板塊取代佢。
+   v4.0：XLK 部分回歸 —— 雷達 / 強勢排名 / 摘要帶都出返 XLK；
+   RETIRED 而家淨係擋訊號卡區（科技訊號照舊由四細分代表），drill 代理圖安排唔郁。 */
 var RETIRED={XLK:1};
 /* 四子代號表（Top5 表 badge / 強勢行 badge 用）；label 嚟自 D.techGroups。 */
 var TECHCAT={};
@@ -479,10 +463,6 @@ function pp(v,dp){ /* 已係百分數單位（引擎側 ×100）嘅格式化：1
   if(v==null||isNaN(v))return"—";dp=dp==null?1:dp;
   return(v>0?"+":"")+v.toFixed(dp)+"%";
 }
-function drillStock(key,tk){ /* Top5 行直達：開板塊 drill-down + 揀股票 tab */
-  if(curKey!==key)toggleDetail(key,null);
-  for(var i=0;i<curStocks.length;i++){if(curStocks[i].ticker===tk){selectTab(i);break}}
-}
 /* ---- 線圖數列 → 收市線 / SMA50 / 連續收低於 SMA50 日數（顯示層計數，唔掂引擎） ---- */
 function closesOf(key){
   /* v1.9：科技四子用自組 EW 指數收市線（D.techEwCharts，board 層按引擎砌法重建，
@@ -503,12 +483,13 @@ function smaOf(cs,n){
 }
 function daysBelowInfo(key){
   var cs=closesOf(key);
-  if(cs.length<50)return{days:0,capped:false};
-  var sma=smaOf(cs,50),d=0;
+  if(cs.length<50)return{days:0,deep:0,capped:false};
+  var sma=smaOf(cs,50),d=0,deep=0;
   for(var i=cs.length-1;i>=49;i--){
-    if(cs[i][1]<sma[i])d++;else break;
+    if(cs[i][1]<sma[i]){d++;var v=cs[i][1]/sma[i]-1;if(v<deep)deep=v}else break;
   }
-  return{days:d,capped:d>0&&d===cs.length-49};
+  /* deep = 呢段 episode 最深嘅 收市/SMA50-1（≤0；v4.0 留意值「期內最深」用） */
+  return{days:d,deep:deep,capped:d>0&&d===cs.length-49};
 }
 function daysBelowBadge(key){
   var b=daysBelowInfo(key);
@@ -533,66 +514,7 @@ function turnMeta(t){
   return m;
 }
 
-/* ---- 📡 倉位雷達（signal_tracker 注入 D.radar；冇就靜靜 skip） ---- */
-(function(){
-  if(!D.radar||!D.radar.items)return;
-  var rz=D.radar,items=rz.items||[],closed=rz.closed||[];
-  var LBL={red:"紅燈",yellow:"黃燈",green:"綠燈",white:"持有"};
-  var LCL={red:"b-dn",yellow:"b-am",green:"b-up",white:""};
-  function rpct(v){if(v==null)return"—";return(v>0?"+":"")+v.toFixed(1)+"%"}
-  function rcls(v){return v==null?"flat":v>0?"up":v<0?"dn":"flat"}
-  function dots(st,status){
-    var f=[st>=1,st>=2,status==="closed-trail"];
-    return f.map(function(x){
-      return '<span style="color:'+(x?"var(--up)":"var(--faint)")+'">'+(x?"●":"○")+"</span>"}).join("");
-  }
-  var h='<div class="sec"><i></i><b>POSITION RADAR</b> // 倉位雷達'
-    +'（訊號自動假設入巿 · 實倉以 My_Holdings 為準）· 更新 '+esc(rz.generatedAt||"")+'</div>';
-  if(!items.length){
-    h+='<div class="panel"><div class="empty">而家冇追蹤中嘅倉位</div></div>';
-  }
-  items.forEach(function(it){
-    var card=it.light==="red"?"sig rd-red":it.light==="yellow"?"sig rd-am":"sig rd-dim";
-    h+='<div class="'+card+'"><div class="wl-head">'
-      +badge(LBL[it.light]||"持有",LCL[it.light]||"")
-      +'<span class="wl-name num">'+esc(it.ticker)+"</span>"
-      +'<span style="font-size:13px">'+esc(it.name||"")+"</span>"
-      +badge(esc(it.key||""),"b-cy")
-      +(it.real?badge("實倉","b-pp"):badge("假設"))
-      +(it.manual?badge("自主","b-pp"):"")
-      +'<span style="margin-left:auto">'
-      +badge(esc(it.action||"持有"),LCL[it.light]||"")+"</span></div>"
-      +'<div class="meta2">'+(it.manual?"入巿日":"訊號日")+' <span class="num">'+esc(it.signalDate||it.entryDate||"")+"</span>"
-      +' · 入巿 <span class="num">'+priceFmt(it.entryPrice)+"</span>"+(it.real?"（實倉）":"（假設）")
-      +' · 現價 <span class="num w">'+priceFmt(it.close)+"</span>"
-      +' · 回報 <span class="'+rcls(it.retPct)+' num">'+rpct(it.retPct)+"</span>"
-      +' · 持有 <span class="num">'+(it.daysHeld||0)+"</span> 日"
-      +' · 收割 <span class="num">'+dots(it.harvestStage||0,it.status||"active")+"</span></div>"
-      +'<div class="meta2 num" style="color:var(--faint)">突破位 '+priceFmt(it.breakoutLevel)
-      +' · MA20 '+priceFmt(it.ma20)+' · MA50 '+priceFmt(it.ma50)
-      +' · 高峰 '+priceFmt(it.peak)+"</div>";
-    if(it.reasons&&it.reasons.length)
-      h+='<div class="meta2" style="color:var(--faint)">觸發：'+esc(it.reasons.join("；"))+"</div>";
-    h+="</div>";
-  });
-  if(closed.length){
-    h+='<details class="rd-closed"><summary>已完結紀錄（最近 '+closed.length
-      +' 條 · 策略 forward 驗證）</summary>'
-      +'<div class="twrap"><table class="dt"><tr><th>代號</th><th>名</th><th>入巿日</th>'
-      +'<th>出場日</th><th class="r">回報</th><th class="r">持有</th><th>完結原因</th></tr>';
-    closed.forEach(function(c2){
-      h+="<tr><td class='num w'><b>"+esc(c2.ticker)+"</b></td>"
-        +"<td><div class='nm'>"+esc(c2.name||"")+"</div></td>"
-        +"<td class='num'>"+esc(c2.entryDate||"")+"</td>"
-        +"<td class='num'>"+esc(c2.closeDate||"")+"</td>"
-        +"<td class='r num "+rcls(c2.retPct)+"'>"+rpct(c2.retPct)+"</td>"
-        +"<td class='r num'>"+(c2.daysHeld||0)+"日</td>"
-        +"<td style='font-size:12px;color:var(--dim)'>"+esc(c2.exitReason||"")+"</td></tr>";
-    });
-    h+="</table></div></details>";
-  }
-  $("radar").innerHTML=h;
-})();
+/* ---- 📡 倉位雷達：v4.0 頁面移除（signal_tracker.py 背景照跑，淨係唔再顯示） ---- */
 
 /* ---- 🥇 硬資產板塊（gold.html 專用；IS_GOLD 先執行） ---- */
 function goldDrill(tk){
@@ -608,7 +530,7 @@ if(ISG)(function(){
      v1.2：GLD RANGE 區已由 TOP TIER 取代（呢度唔再改 sec_wl 標題） */
   ["sec_tm","tm"].forEach(function(id){var e=$(id);if(e)e.style.display="none"});
   var tops=$("sec_top");
-  if(tops)tops.innerHTML='<i></i><b>GOLD MINERS</b> // 金礦股 Top 5（評分高→低 · corr20 對 GLD）· 候選股有章（撳行睇圖）';
+  if(tops)tops.innerHTML='<i></i><b>GOLD MINERS</b> // 金礦股 Top 5（評分高→低 · corr20 對 GC=F）· 候選股有章（撳行睇圖）';
 
   /* ---- v2.0 英雄格：GLD / IBIT 兩卡並排（頂部舊文字儀表退役） ----
      狀態 = 收市 vs 當日 SMA50（sectorTurns 權威；冇 turn 數據當強勢款）：
@@ -691,9 +613,9 @@ if(ISG)(function(){
   var gdxX=gi.gdx?'<div class="gh-sub">參考 GDX：收 '+priceFmt(gi.gdx.close)
     +' · 昨日 <span class="'+cls(gi.gdx.vsT1)+'">'+pct(gi.gdx.vsT1)+'</span>'
     +' · 1M <span class="'+cls(gi.gdx.ret1M)+'">'+pct(gi.gdx.ret1M)+"</span></div>":"";
-  var h='<div class="sec"><i></i><b>硬資產儀表</b> // GLD + IBIT 英雄格（強度分 0-100 · 價位狀態 = 收市 vs 當日 SMA50 · ChoCH 訊號狀態另行列出）</div>'
+  var h='<div class="sec"><i></i><b>硬資產儀表</b> // GC=F + IBIT 英雄格（強度分 0-100 · 價位狀態 = 收市 vs 當日 SMA50 · ChoCH 訊號狀態另行列出）</div>'
     +'<div class="ghgrid">'
-    +heroCard("GLD","SPDR Gold Shares",D.goldInfo,(D.sectorTurns||{}).GLD,gdxX)
+    +heroCard("GLD",(D.goldInfo||{}).displayName||"黃金期貨 GC=F",D.goldInfo,(D.sectorTurns||{}).GLD,gdxX)
     +heroCard("IBIT","iShares Bitcoin Trust",D.btcInfo,(D.sectorTurns||{}).IBIT,"")
     +"</div>"
     +((D.dataIssues||[]).length
@@ -706,7 +628,7 @@ if(ISG)(function(){
   if(!(D.miners||[]).length){
     $("top").innerHTML='<div class="empty">金礦股數據今日拉唔到</div>';
   }else{
-    $("top").innerHTML=top5Table(top5of(D.miners),tops5,"GLD");
+    $("top").innerHTML=top5Table(top5of(D.miners),tops5,"GC=F");
   }
   Array.prototype.forEach.call($("top").querySelectorAll("tr[data-tk]"),function(tr){
     tr.addEventListener("click",function(){goldDrill(tr.getAttribute("data-tk"))});
@@ -764,14 +686,14 @@ if(ISG)(function(){
   });
 })();
 
-/* ---- ⚡ TURNING 訊號卡區（頂部）+ HOLDING 卡區（頁底 holdsec）----
-   v1.3：HOLDING 搬落頁底（holdsec），頂部淨係今日新轉強；兩區冇嘢就各自收埋。 ---- */
+/* ---- 持倉區（v4.0 置頂，取代 v1.3 頂部 TURNING + 頁底 holdsec 兩區）----
+   TURNING 卡最頂（冇唔出）→ HOLDING 卡（冇出明確空狀態）→ 今日 INVALID 坐底。 ---- */
 var NAME={};
 function buildName(){   /* v3.2：抽出嚟 —— strong 頁市場切換要重建 */
   NAME={};
   (D.sectors||[]).forEach(function(s){if(s.etf)NAME[s.etf]=s.sector});
   (D.techGroups||[]).forEach(function(g){if(g.cat)NAME[g.cat]=g.label});
-  if(ISG){NAME.GLD=NAME.GLD||"SPDR Gold Shares";NAME.IBIT=NAME.IBIT||"iShares Bitcoin Trust"}
+  if(ISG){NAME.GLD=(D.goldInfo||{}).displayName||"黃金期貨 GC=F";NAME.IBIT=NAME.IBIT||"iShares Bitcoin Trust"}
 }
 buildName();
 function pickChips(key,n){
@@ -829,7 +751,7 @@ function sigCard(r){ /* v3.0：V2 狀態驅動。TURNING/HOLDING/INVALID 三種�
 (function(){
   var turning=[],holding=[],invalid=[];
   Object.keys(SECT_TURNS).forEach(function(k){
-    if(RETIRED[k])return;   /* v1.9：XLK 退役 */
+    if(RETIRED[k])return;   /* v1.9：訊號卡區維持唔出 XLK（v4.0 只放寬雷達/強勢排名） */
     var s=stateV2Of(SECT_TURNS[k]);
     if(s==="TURNING")turning.push({key:k,t:SECT_TURNS[k],tech:false});
     else if(s==="HOLDING")holding.push({key:k,t:SECT_TURNS[k],tech:false});
@@ -841,24 +763,20 @@ function sigCard(r){ /* v3.0：V2 狀態驅動。TURNING/HOLDING/INVALID 三種�
     else if(s==="HOLDING")holding.push({key:k,t:TECH_TURNS[k],tech:true});
     else if(s==="INVALID")invalid.push({key:k,t:TECH_TURNS[k],tech:true});
   });
-  /* ② 今日新訊號區：冇 TURNING 都要出明確空狀態，唔准留空 */
-  var h='<div class="sec"><i></i><b>今日新訊號</b> // TURNING · V2 雙日確認 · '+turning.length+'</div>';
-  if(turning.length){
-    turning.forEach(function(r){h+=sigCard(r)});
-  }else{
-    h+='<div class="panel"><div class="empty">今日沒有新確認的 ChoCH 板塊訊號（數據截至 '
-      +esc(D.latestMarketDate||"")+'）。<br><span style="font-size:11.5px">想睇蓄勢中嘅板塊，請睇下方「等待確認的板塊 // WAITING RADAR」。</span></div></div>';
-  }
-  invalid.forEach(function(r){h+=sigCard(r)});   /* 今日失效（如有）排 TURNING 後 */
-  $("sigsec").innerHTML=h;
-  var hh="";
+  /* v4.0：持倉區置頂 —— TURNING 新入場排最頂（新入場=最新持倉）→ HOLDING → 今日 INVALID 坐底；
+     冇 TURNING 唔出空塊；冇 HOLDING 要明確空狀態文案 */
+  var h='<div class="sec"><i></i><b>持倉</b> // POSITIONS · V2 雙日確認 · HOLDING '+holding.length
+    +(turning.length?' · 今日新入 '+turning.length:"")+'</div>';
+  turning.forEach(function(r){h+=sigCard(r)});
   if(holding.length){
-    hh+='<div class="sec"><i></i><b>HOLDING</b> // 訊號持續有效 · '+holding.length+'</div>';
-    holding.forEach(function(r){hh+=sigCard(r)});
+    holding.forEach(function(r){h+=sigCard(r)});
+  }else{
+    h+='<div class="panel"><div class="empty">而家冇持續中嘅訊號持倉（數據截至 '
+      +esc(D.latestMarketDate||"")+'）。<br><span style="font-size:11.5px">等緊下一個 ChoCH 確認；蓄勢中嘅板塊請睇下方「等待確認的板塊 // WAITING RADAR」。</span></div></div>';
   }
-  var hs=$("holdsec");
-  if(hs)hs.innerHTML=hh;
-  Array.prototype.forEach.call(document.querySelectorAll("#sigsec [data-key],#holdsec [data-key]"),function(c){
+  invalid.forEach(function(r){h+=sigCard(r)});   /* 今日失效（已離場）坐最底 */
+  $("sigsec").innerHTML=h;
+  Array.prototype.forEach.call(document.querySelectorAll("#sigsec [data-key]"),function(c){
     c.addEventListener("click",function(){toggleDetail(c.getAttribute("data-key"),null)});
   });
 })();
@@ -880,26 +798,28 @@ function sigCard(r){ /* v3.0：V2 狀態驅動。TURNING/HOLDING/INVALID 三種�
     if(s==="TURNING")turningN++;
     else if(s==="HOLDING")holding.push(TECH_TURNS[k]);
   });
-  /* 雷達第一名 = WAITING 兼收低於 SMA50 入面留意值最高 */
+  /* 雷達第一名 = WAITING 兼收低於 SMA50 入面留意值最高（v4.0：XLK 回歸，一齊掃） */
   var top1=null;
   function scan1(k){
     if(stateV2Of(turnOf(k))!=="WAITING")return;
+    var t=turnOf(k);
+    if(!t||t.close==null||!t.sma50||t.close>=t.sma50)return;   /* 同雷達口徑：要收低於 SMA50 */
     var ws=watchScore(k);
     if(ws&&(!top1||ws.score>top1.ws.score))top1={key:k,ws:ws};
   }
-  Object.keys(SECT_TURNS).forEach(function(k){if(!RETIRED[k])scan1(k)});
+  Object.keys(SECT_TURNS).forEach(scan1);
   Object.keys(TECH_TURNS).forEach(scan1);
   var maxDur=0;
   holding.forEach(function(t){var d=t.durationDaysV2||0;if(d>maxDur)maxDur=d});
   var h='<div class="sumb">'
     +'<div class="sumt"><div class="sum-lb">今日新訊號 TURNING</div>'
       +'<div class="sum-n" style="color:'+(turningN?"var(--cy)":"var(--faint)")+'">'+turningN+'</div>'
-      +'<div class="sum-sub">'+(turningN?"見下方「今日新訊號」區":"今日冇新確認 ChoCH")+'</div></div>'
+      +'<div class="sum-sub">'+(turningN?"見下方持倉區":"今日冇新確認 ChoCH")+'</div></div>'
     +'<div class="sumt"><div class="sum-lb">反彈雷達第一名</div>'
       +(top1
         ?'<div class="sum-n" style="font-size:17px">'+esc(top1.key)
           +' <span style="font-size:12px;color:var(--faint)">'+esc(NAME[top1.key]||"")+'</span></div>'
-          +'<div class="sum-sub">留意值 <b>'+top1.ws.score+'</b> · 距 SMA50 '+pct(top1.ws.dist)+'</div>'
+          +'<div class="sum-sub">留意值 <b>'+top1.ws.score+'</b> · 期內最深 '+pct(top1.ws.deep)+'</div>'
         :'<div class="sum-n" style="color:var(--faint)">—</div>'
           +'<div class="sum-sub">冇板塊喺 SMA50 下</div>')
       +'</div>'
@@ -931,7 +851,8 @@ function heatBg(r,maxAbs){
 /* v3.2：secs/wallSecs 砌法抽成 rebuildSecs()（strong 頁市場切換要重建） */
 var secs=[],wallSecs=[];
 function rebuildSecs(){
-  secs=(D.sectors||[]).filter(function(s){return !RETIRED[s.etf]}).slice();
+  /* v4.0：XLK 回歸雷達/強勢排名（唔再 filter；訊號卡區維持唔出 XLK） */
+  secs=(D.sectors||[]).slice();
   (D.techGroups||[]).forEach(function(g){
     if(g.cat)secs.push({etf:g.cat,sector:g.label,strength:g.strength,ret1M:g.ret1M,x150:g.x150,tech:true,rank:g.rank});
   });
@@ -1556,8 +1477,11 @@ function ttGauge(score){
   }
   /* 能量弧霓光 glow（分數位置光譜色） */
   if(litLines)s+='<g style="filter:drop-shadow(0 0 3px '+ttRgb(st,0.85)+')">'+litLines+"</g>";
-  /* 指針（光譜色，指住數值） */
-  var a=Math.PI*(1-f),nx=(cx+54*Math.cos(a)).toFixed(1),ny=(cy-54*Math.sin(a)).toFixed(1);
+  /* 指針（光譜色，指住數值）
+     v4.0：針長 54 → 68 —— 舊長度短過刻度內緣（r0-5=59），針尖同亮弧之間留空隙，
+     低分格（如 SEMI 20-30 分品紅）視覺上「針弧唔對位」；加長到亮格帶中段（59-78），
+     針尖真係掂到弧。角度公式本身經像素級量度證明正確（唔係角度 bug）。 */
+  var a=Math.PI*(1-f),nx=(cx+68*Math.cos(a)).toFixed(1),ny=(cy-68*Math.sin(a)).toFixed(1);
   s+='<line x1="'+cx+'" y1="'+cy+'" x2="'+nx+'" y2="'+ny+'" stroke="'+ttRgb(st)+'" stroke-width="2.5"/>'
     +'<rect x="'+(cx-3)+'" y="'+(cy-3)+'" width="6" height="6" fill="'+ttRgb(st)+'"/>';
   /* 端點 0 / 100 細標 */
@@ -1611,29 +1535,34 @@ function strGauge(score){
   return s+"</svg>";
 }
 
-/* ---- 反彈雷達觀察板塊（v1.8：收市 < 當日 SMA50 · 格框跟分數光譜色+光度） ----
-   留意值（純顯示層計，唔掂引擎）= 60×貼線 + 40×困日：
-     貼線 = 1 - min(|距SMA50%| / 8, 1)  —— 貼住條線越高分，跌遠 8% 歸零
+/* ---- 反彈雷達觀察板塊（v4.0：英雄格 + 細格合併同一區 · #1 大英雄格佔兩格闊 ·
+   XLK 回歸雷達排名） ----
+   留意值（純顯示層計，唔掂引擎）v4.0 = 50×期內最深 + 50×困日：
+     期內最深 = 呢段連續收低於 SMA50 嘅 episode 入面，逐日 收市/SMA50-1 嘅最深值；
+       -3% 起計 0 分、-12% 計滿 100，深過 -12% 照舊 100（唔扣分 —— 深跌過先係
+       反彈機會，ChoCH 係第二重 filter）；從未深跌嘅徘徊股（最深 >-3%）深度 0 分，
+       總分上限得 50，永遠排尾
      困日 = min(連續收低於SMA50日數 / 20, 1) —— 困得耐越高分，20 日計滿
-   每格淨係顯示：板塊名 · 代號 · 扇形能量表（留意值鑲喺表入面）· 右上角「第N日」章。
+   每格：板塊名 · 代號 · 扇形能量表（留意值鑲喺表入面）· 右上「第N日」章 ·
+   細格副標「期內最深 -x.x% · 第 N 日」，英雄格加埋而家距離 + Top3。
    格框色 = 分數光譜位置色（同指針同色），框透明度 + glow 跟分數線性：越高分越閃。
    冇 below 板塊就收埋成個區；頁尾 scorenote 寫公式 + 每格分數明細。 */
 function watchScore(key){
   var t=turnOf(key);
   if(!t||t.close==null||t.sma50==null||!t.sma50)return null;
-  var dist=(t.close-t.sma50)/t.sma50;
   var b=daysBelowInfo(key);
-  /* v3.0：拆出兩部分分（popover 點計用）；總分公式 60/40 唔變 */
-  var prox=60*(1-Math.min(Math.abs(dist*100)/8,1));
-  var dura=40*Math.min(b.days/20,1);
+  /* v4.0：50×期內最深（-3% 起 / -12% 滿，深過唔扣分）+ 50×困日（20 日計滿） */
+  var deepRaw=Math.max(0,Math.min(1,(-(b.deep||0)*100-3)/9));
+  var prox=50*deepRaw;
+  var dura=50*Math.min(b.days/20,1);
   return{score:Math.round(prox+dura),prox:Math.round(prox),dura:Math.round(dura),
-    dist:dist,days:b.days,capped:b.capped};
+    deep:b.deep,days:b.days,capped:b.capped};
 }
 (function(){
-  /* v3.0：雷達淨收「WAITING 兼收低於 SMA50」—— HOLDING 跌一日唔准上雷達（V2 雙日確認） */
+  /* v3.0：雷達淨收「WAITING 兼收低於 SMA50」—— HOLDING 跌一日唔准上雷達（V2 雙日確認）
+     v4.0：XLK 回歸雷達排名（唔再 RETIRED；訊號卡區維持唔出 XLK） */
   var below=[];
   Object.keys(SECT_TURNS).forEach(function(k){
-    if(RETIRED[k])return;   /* v1.9：XLK 退役 */
     if(turnState(SECT_TURNS[k])==="below"&&stateV2Of(SECT_TURNS[k])==="WAITING")
       below.push({key:k,t:SECT_TURNS[k],tech:false});
   });
@@ -1642,9 +1571,8 @@ function watchScore(key){
       below.push({key:k,t:TECH_TURNS[k],tech:true});
   });
   var sec=$("sec_wl"),note=$("scorenote");
-  var heroBox=(ISG||ISGUIDE)?null:$("hero");   /* ③ 英雄卡獨立區（US/HK 先有） */
   var NOTE_TOP="反彈雷達 = 收市跌穿咗當日 SMA50 · 等緊轉強訊號 · 留意值高→低排";
-  var NOTE_FORMULA="留意值 = 60×貼線（距 SMA50 8% 歸零）+ 40×困日（連續收低於 SMA50 · 滿 20 日計滿）";
+  var NOTE_FORMULA="留意值 = 50×期內最深（跌穿期最深收市偏離 SMA50 · -3% 起計 · -12% 計滿，深過唔扣分）+ 50×困日（連續收低於 SMA50 · 滿 20 日計滿）";
   var NOTE_STR="強勢板塊 = 收市企喺 SMA50 上 · 按舊強度分（0-100）高→低排";
   if((D.techGroups||[]).length)NOTE_STR+=" · 科技細分為等權指數，強度尺與 SPDR 略有差異";
   var scored=[];
@@ -1653,7 +1581,6 @@ function watchScore(key){
   if(!scored.length){
     $("wl").innerHTML="";
     if(sec)sec.style.display="none";
-    if(heroBox)heroBox.innerHTML="";
     if(note)note.innerHTML='<div class="scorenote">'+NOTE_TOP+" ｜ "+NOTE_FORMULA
       +' ｜ 而家冇板塊喺 SMA50 下<br>'+NOTE_STR+"</div>";
     return;
@@ -1663,18 +1590,22 @@ function watchScore(key){
       +' 個 · 留意值高→低（撳格查看走勢）';
     sec.style.display="";
   }
-  /* 分數點計 popover 內容（ⓘ 掣；貼線/困日/總分/距%/連續日數/狀態） */
+  /* 分數點計 popover 內容（ⓘ 掣；期內最深/困日/總分/而家距%/連續日數/狀態） */
   function popHtml(r,ws){
-    return '<div class="pr"><span>貼線（距 8% 歸零）</span><b>'+ws.prox+' / 60</b></div>'
-      +'<div class="pr"><span>困日（20 日計滿）</span><b>'+ws.dura+' / 40</b></div>'
+    var dist=(r.t.close-r.t.sma50)/r.t.sma50;
+    return '<div class="pr"><span>期內最深（-3% 起 / -12% 滿）</span><b>'+ws.prox+' / 50</b></div>'
+      +'<div class="pr"><span>困日（20 日計滿）</span><b>'+ws.dura+' / 50</b></div>'
       +'<div class="pr"><span>總留意值</span><b>'+ws.score+' / 100</b></div>'
-      +'<div class="pr"><span>距 SMA50</span><b class="'+cls(ws.dist)+'">'+pct(ws.dist)+'</b></div>'
+      +'<div class="pr"><span>期內最深回調</span><b class="dn">'+pct(ws.deep)+'</b></div>'
+      +'<div class="pr"><span>而家距 SMA50</span><b class="'+cls(dist)+'">'+pct(dist)+'</b></div>'
       +'<div class="pr"><span>連續低於 SMA50</span><b>'+(ws.capped?"≥":"")+ws.days+' 日</b></div>'
       +'<div class="pr"><span>訊號狀態</span><b>WAITING 等待確認</b></div>';
   }
   function heroExtra(r,ws){
-    var s='<div class="tt-dist">距 SMA50 <span class="num '+cls(ws.dist)+'">'+pct(ws.dist)+"</span>"
-      +' · 連續低於 SMA50 <span class="num">'+(ws.capped?"≥":"")+ws.days+" 日</span></div>";
+    var dist=(r.t.close-r.t.sma50)/r.t.sma50;
+    var s='<div class="tt-dist">期內最深 <span class="num dn">'+pct(ws.deep)+"</span>"
+      +' · 第 <span class="num">'+(ws.capped?"≥":"")+ws.days+"</span> 日"
+      +' · 而家距 SMA50 <span class="num '+cls(dist)+'">'+pct(dist)+"</span></div>";
     var picks=(D.topPicks||[]).filter(function(p){return(p.etf||p.code)===r.key}).slice(0,3);
     if(picks.length)s+='<div class="tt-top3">'+picks.map(function(p){
       return '<b class="num">'+esc(p.ticker)+"</b> "+esc(p.name||"");
@@ -1695,32 +1626,24 @@ function watchScore(key){
       +'<div class="tt-nm">'+esc(nm)+cnName(nm)+(r.tech?" "+badge("科技細分","b-pp"):"")
       +" "+badge("WAITING","b-pp")+"</div>"
       +'<div class="tt-g">'+ttGauge(ws.score)+"</div>"
-      +(hero?heroExtra(r,ws):"")
+      +(hero?heroExtra(r,ws)
+        :'<div class="tt-dist">期內最深 <span class="num dn">'+pct(ws.deep)+'</span> · 第 '+(ws.capped?"≥":"")+ws.days+' 日</div>')
       +'<div class="tt-hint">查看走勢 ›</div>'
       +"</div>";
   }
-  var list=scored,bits=[];
-  scored.forEach(function(r){bits.push(esc(r.key)+" "+r.ws.score+"（"+pct(r.ws.dist)+" · "+r.ws.days+"日）")});
-  if(heroBox){
-    /* ③ 第一名搬入獨立英雄區（herowrap 限闊 640px），其餘落入 #wl 格仔牆 */
-    var first=scored[0];
-    list=scored.slice(1);
-    heroBox.innerHTML='<div class="sec"><i></i><b>TOP REBOUND WATCH</b> // 反彈雷達第一名</div>'
-      +'<div class="herowrap">'+tileHtml(first,first.ws,true)+"</div>";
-    var hb=heroBox.querySelector(".pinfo");
-    if(hb)hb._popHtml=popHtml(first,first.ws);
-    heroBox.querySelector(".ttile").addEventListener("click",function(){toggleDetail(first.key,null)});
-  }
+  /* v4.0：#1 大英雄格直接放 grid 頂（hero class 佔兩格闊），#2 起統一細格 —— 同一區 */
+  var bits=[];
+  scored.forEach(function(r){bits.push(esc(r.key)+" "+r.ws.score+"（期內最深 "+pct(r.ws.deep)+" · "+r.ws.days+"日）")});
   var h='<div class="ttgrid">';
-  list.forEach(function(r,idx){
-    h+=tileHtml(r,r.ws,!heroBox&&idx===0);   /* gold 頁冇 hero 區：#1 照舊喺 grid 佔兩格 */
+  scored.forEach(function(r,idx){
+    h+=tileHtml(r,r.ws,idx===0);
   });
   h+="</div>";
   $("wl").innerHTML=h;
   if(note)note.innerHTML='<div class="scorenote">'+NOTE_TOP+" ｜ "+NOTE_FORMULA+" ｜ "+bits.join(" · ")+"<br>"+NOTE_STR+"</div>";
   var tileEls=$("wl").querySelectorAll(".ttile");
   Array.prototype.forEach.call(tileEls,function(c,i){
-    var r=list[i];
+    var r=scored[i];
     var pb=c.querySelector(".pinfo");
     if(pb)pb._popHtml=popHtml(r,r.ws);
     c.addEventListener("click",function(){toggleDetail(c.getAttribute("data-key"),null)});
@@ -1761,90 +1684,12 @@ function watchScore(key){
   $("brksec").innerHTML=h;
 })();
 
-/* ---- 重點板塊候選股（v3.0：details 預設收起 · 訊號板塊（TURNING→HOLDING）排前兼展開 ·
-   撳行直達 drill-down 股票 tab · 評分格 ⓘ popover 講「為何入選」（市值70/成交30 拆細）；
-   v1.9 US：10 SPDR + 4 科技細分 = 14 板塊各 5 隻 · XLK 表退役；
-   HK：全部 12 行業各 5 隻；gold 頁由 gold block 處理） ---- */
+/* ---- 重點板塊候選股 Top 5：v4.0 成區退役（US/HK 首頁） ----
+   用戶理由：holding / watchlist 撳落 drill-down 已經睇到 top5 stocks，重複兼分散焦點；
+   drill-down 入面嘅 Top5 表保留唔郁。gold 頁照舊用 sec_top/#top 擺金礦股表（gold block 處理），
+   所以 skeleton 保留兩個 div，呢度淨係收埋。 */
 if(!ISG)(function(){
-  var picks=D.topPicks||[];
-  if(!picks.length){$("top").innerHTML='<div class="empty">冇數據</div>';return}
-  var groups=[],gmap={};
-  picks.forEach(function(p){
-    var k=p.etf||p.code||"";
-    if(RETIRED[k])return;   /* v1.9：XLK 表退役 */
-    if(!gmap[k]){gmap[k]={key:k,rank:p.sectorRank||0,name:p.sector||"",tech:!!TECHCAT[k],items:[]};groups.push(gmap[k])}
-    gmap[k].items.push(p);
-  });
-  var expN=(D.sectors||[]).filter(function(s){return !RETIRED[s.etf]}).length+(D.techGroups||[]).length;
-  var allMode=groups.length>0&&groups.length===expN;
-  var strOf={};
-  (D.sectors||[]).forEach(function(s){strOf[s.etf]=s.strength||0});
-  (D.techGroups||[]).forEach(function(g){strOf[g.cat]=g.strength||0});
-  /* v3.0：訊號板塊排最前（TURNING 先、HOLDING 後），其餘照舊 SPDR 強度→科技細分 */
-  function sigPri(g){
-    var s2=stateV2Of(turnOf(g.key));
-    return s2==="TURNING"?0:s2==="HOLDING"?1:2;
-  }
-  groups.sort(function(a,b){
-    var pa=sigPri(a),pb=sigPri(b);
-    if(pa!==pb)return pa-pb;
-    if(a.tech!==b.tech)return a.tech?1:-1;
-    return (strOf[b.key]||0)-(strOf[a.key]||0);
-  });
-  /* 「為何入選」popover：市值/成交額貢獻拆細（舊數據冇 capPart 就齋總分+corr） */
-  function pickPop(p){
-    var h="";
-    if(p.capPart!=null&&p.volPart!=null){
-      h+='<div class="pr"><span>市值貢獻</span><b>'+p.capPart.toFixed(1)+' / 70</b></div>'
-        +'<div class="pr"><span>成交額貢獻</span><b>'+p.volPart.toFixed(1)+' / 30</b></div>';
-    }
-    h+='<div class="pr"><span>總分</span><b>'+(p.score!=null?p.score.toFixed(1):"—")+' / 100</b></div>'
-      +'<div class="pr"><span>corr20</span><b>'+(p.corr!=null?p.corr.toFixed(2):"—")+'</b></div>'
-      +'<div style="margin-top:4px;color:var(--faint)">corr20 只供參考，唔計入總分</div>';
-    return h;
-  }
-  var h="",spN=0,spTotal=groups.filter(function(g){return !g.tech}).length,rowPops=[];
-  groups.forEach(function(g){
-    var rb;
-    if(g.tech){
-      rb=badge("科技細分 · #"+g.rank,"b-pp");
-    }else{
-      spN++;
-      rb=spN===1?badge("#1 最強","b-up")
-        :(allMode?(spTotal>1&&spN===spTotal?badge("#"+spN+" 最弱","b-dn"):badge("#"+spN,""))
-                 :badge("#"+spN+" 弱勢","b-dn"));
-    }
-    var s2=stateV2Of(turnOf(g.key));
-    var isSig=s2==="TURNING"||s2==="HOLDING";
-    h+='<details class="tpg"'+(isSig?" open":"")+'><summary>'
-      +'<span class="num w"><b>'+esc(g.key)+"</b></span><span>"
-      +esc(g.name)+cnName(g.name)+"</span>"
-      +(isSig?stateBadge(turnOf(g.key)):"")+rb
-      +'<span class="tpg-hint">'+g.items.length+' 隻候選股</span></summary>'
-      +'<div class="twrap"><table class="dt"><tr><th>代號</th><th>名</th><th class="r">收市</th>'
-      +'<th class="r">vs昨日</th><th class="r">評分 ⓘ</th><th class="r">corr</th><th class="r">成交額20D</th><th class="r">市值</th><th></th></tr>';
-    g.items.forEach(function(p){
-      rowPops.push(pickPop(p));
-      h+="<tr data-tk='"+esc(p.ticker)+"' data-gk='"+esc(g.key)+"' style='cursor:pointer'>"
-        +"<td class='num w'><b>"+esc(p.ticker)+"</b></td><td><div class='nm'>"+esc(p.name||"")+"</div></td>"
-        +"<td class='r num'>"+priceFmt(p.close)+"</td>"
-        +"<td class='r num "+cls(p.vsT1)+"'>"+pct(p.vsT1)+"</td>"
-        +"<td class='r num'>"+(p.score!=null?p.score.toFixed(1):"—")
-          +'<button type="button" class="pinfo" aria-label="點解入選">i</button></td>'
-        +"<td class='r'>"+corrHtml(p.corr)+"</td>"
-        +"<td class='r num'>"+(p.avgVolUsd?capFmt(p.avgVolUsd):"—")+"</td>"
-        +"<td class='r num'>"+capFmt(p.cap)+"</td>"
-        +"<td>"+(p.breakout?badge("突破","b-up"):"")+"</td></tr>";
-    });
-    h+="</table></div></details>";
-  });
-  $("top").innerHTML=h;
-  Array.prototype.forEach.call($("top").querySelectorAll("tr[data-tk]"),function(tr,i){
-    var pb=tr.querySelector(".pinfo");
-    if(pb)pb._popHtml=rowPops[i];
-    tr.addEventListener("click",function(){
-      drillStock(tr.getAttribute("data-gk"),tr.getAttribute("data-tk"))});
-  });
+  ["sec_top","top"].forEach(function(id){var e=$(id);if(e)e.style.display="none"});
 })();
 
 /* ---- 📖 教學頁（v2.1 guide.html 專用；IS_GUIDE 先執行） ----
@@ -1853,19 +1698,20 @@ if(!ISG)(function(){
    冇數據就 fallback 固定值，頁面點都 render 到。 */
 if(ISGUIDE)(function(){
   ["golddash","sigsec","sec_wl","wl","sec_str","strong","detail","brksec",
-   "sec_top","top","btcdash","holdsec","radar","scorenote"].forEach(function(id){
+   "sec_top","top","btcdash","scorenote"].forEach(function(id){
     var e=$(id);if(e)e.style.display="none";
   });
   /* v3.5：四幕故事「等 → 入 → 坐 → 走」—— 全部動態真值：
      幕① 雷達第一名（WAITING 留意值最高，同首頁摘要帶同一邏輯）；
      幕②③ HOLDING 訊號（countHistory 有 1→0 失效監察轉折嘅優先，教學最完整）；
      幕④ INVALID 訊號（科技細分 EW 指數優先，順便示範合成 K 線）。冇數據 fallback 固定值 */
-  var g1key="XLU",ws=watchScore("XLU")||{score:69,dist:-0.0413,days:32,capped:false};
+  var g1key="XLU",ws=watchScore("XLU")||{score:63,deep:-0.0539,days:33,capped:false};
   (function(){
     var best=null;
     function sc(k){if(stateV2Of(turnOf(k))!=="WAITING")return;
+      var t=turnOf(k);if(!t||t.close==null||!t.sma50||t.close>=t.sma50)return;   /* 同雷達口徑：收低於 SMA50 */
       var w=watchScore(k);if(w&&(!best||w.score>best.w.score))best={key:k,w:w}}
-    Object.keys(SECT_TURNS).forEach(function(k){if(!RETIRED[k])sc(k)});
+    Object.keys(SECT_TURNS).forEach(sc);   /* v4.0：XLK 回歸，同首頁雷達一致 */
     Object.keys(TECH_TURNS).forEach(sc);
     if(best){g1key=best.key;ws=best.w}
   })();
@@ -2011,8 +1857,9 @@ if(ISGUIDE)(function(){
   +'<div class="gd-grid"><div>'
   +'<div class="gd-sub">留意值 0-100 點計</div>'
   +'<ul class="gd-ul">'
-  +'<li><b>60% 睇「貼線」</b>：價越貼近 SMA50 越高分，跌超過 8% 歸零</li>'
-  +'<li><b>40% 睇「困日」</b>：連續低於 SMA50 嘅日數，困 20 日計滿</li>'
+  +'<li><b>50% 睇「期內最深」</b>：呢段跌穿期最深跌幾多（逐日收市 vs 當日 SMA50 嘅最深值）—— -3% 起計 0 分、-12% 計滿 100，深過 -12% 照舊 100 唔扣分</li>'
+  +'<li><b>50% 睇「困日」</b>：連續低於 SMA50 嘅日數，困 20 日計滿</li>'
+  +'<li>pattern：<b>曾經深跌過、再橫行磨返近線 = 最好</b>；未深跌過嘅徘徊（最深唔夠 -3%）= 深度 0 分，總分上限 50，永遠排尾</li>'
   +'</ul>'
   +'<div class="gd-sub">點等</div>'
   +'<ul class="gd-ul">'
@@ -2025,7 +1872,7 @@ if(ISGUIDE)(function(){
   +'<div class="gd-g">'+ttGauge(ws.score)+'</div>'
   +'<div class="gd-cap"><b>'+esc(g1key)+(g1nm?" "+esc(g1nm)+cnName(g1nm):"")+'</b> · 留意值 <b>'+ws.score+'</b> 分 · '
     +(ws.capped?"≥":"第 ")+'<b>'+ws.days+'</b>'+(ws.capped?"":" 日")
-    +' · 距 SMA50 <span class="num '+cls(ws.dist)+'">'+pct(ws.dist)+'</span>'
+    +' · 期內最深 <span class="num dn">'+pct(ws.deep)+'</span>'
     +(top3?'<br>Top 3：'+top3:'')+'</div></div>'
   +'</div></div>'
   +'<canvas id="gdchart1" class="gd-kline"></canvas>'
@@ -2132,6 +1979,13 @@ if(ISGUIDE)(function(){
   +'<div class="gdcard">'
   +'<div class="gd-h" style="color:#e8ecf2">⑥ 計分同入選規則<span class="gd-tag">邊啲計 · 邊啲唔計</span></div>'
   +'<div class="gd-grid"><div>'
+  +'<div class="gd-sub">雷達留意值（0-100 · v4.0）</div>'
+  +'<ul class="gd-ul">'
+  +'<li><b>50% 期內最深 + 50% 困日</b>，兩樣組成</li>'
+  +'<li>期內最深：跌穿期最深收市偏離 SMA50 —— -3% 起計 0 分、-12% 計滿，深過唔扣分；未深跌嘅徘徊（> -3%）深度 0 分，總分上限 50</li>'
+  +'<li>困日：連續收低於 SMA50 日數，20 日計滿</li>'
+  +'</ul>'
+  +'</div><div>'
   +'<div class="gd-sub">候選股 Top 5 評分</div>'
   +'<ul class="gd-ul">'
   +'<li><b>只由兩樣組成：市值 70 / 成交額 30</b>（板塊/行業內分位）</li>'
@@ -2156,7 +2010,7 @@ if(ISGUIDE)(function(){
     drawPanel($("gdchart1"),(D.indexCharts||{})[g1key]||[],"indexS",
       {h:260,win:90,tag:"▮ 價",
        annot:{shade:"below",color:"126,142,247",accent:"#3D8BFF",
-         now:"而家：距線 "+pct(ws.dist)+" · 貼線中",
+         now:"而家：期內最深 "+pct(ws.deep)+" · 磨緊返近線",
          crossDown:"跌破 SMA50 = 轉弱起點",crossUp:"升穿 SMA50 = 轉強"}});
     drawPanel($("gdchart2"),hD.rows,"indexS",
       {h:260,win:win2,endTrim:trim2,tag:"▮ 價",
@@ -2179,8 +2033,8 @@ if(ISGUIDE)(function(){
 /* ---- 💪 強勢獨立頁（v3.2 strong.html 專用；IS_STRONG 先執行） ----
    收埋標準區；頁首講明「順勢參考 ≠ 反彈雷達」；US/HK 市場切換（重建全套市場相關 globals） */
 if(ISSTRONG)(function(){
-  ["guide","golddash","sigsec","hero","holdsec","sec_wl","wl","brksec",
-   "sec_top","top","btcdash","radar","scorenote"].forEach(function(id){
+  ["guide","golddash","sigsec","sec_wl","wl","brksec",
+   "sec_top","top","btcdash","scorenote"].forEach(function(id){
     var e=$(id);if(e)e.style.display="none";
   });
   var hasHK=!!DATA_HK;
