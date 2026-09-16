@@ -527,10 +527,9 @@ function btcDrill(tk){
 }
 if(ISG)(function(){
   /* 收埋美股/港股專用區（brksec 保留：GLD 突破事件會喺度出）
-     v1.2：GLD RANGE 區已由 TOP TIER 取代（呢度唔再改 sec_wl 標題） */
+     v1.2：GLD RANGE 區已由 TOP TIER 取代（呢度唔再改 sec_wl 標題）
+     v4.1：sec_top 標題都收埋 —— 金礦股 Top 5 已改 <details> 摺疊，summary 自帶標題 */
   ["sec_tm","tm"].forEach(function(id){var e=$(id);if(e)e.style.display="none"});
-  var tops=$("sec_top");
-  if(tops)tops.innerHTML='<i></i><b>GOLD MINERS</b> // 金礦股 Top 5（評分高→低 · corr20 對 GC=F）· 候選股有章（撳行睇圖）';
 
   /* ---- v2.0 英雄格：GLD / IBIT 兩卡並排（頂部舊文字儀表退役） ----
      狀態 = 收市 vs 當日 SMA50（sectorTurns 權威；冇 turn 數據當強勢款）：
@@ -568,7 +567,7 @@ if(ISG)(function(){
         +";box-shadow:0 0 "+Math.round(6+16*f)+"px "+ttRgb(c,(0.06+0.50*f).toFixed(2));
     }
     var dist=(turn&&turn.close!=null&&turn.sma50)?(turn.close-turn.sma50)/turn.sma50:null;
-    return '<div class="ghcard" style="'+frame+'">'
+    return '<div class="ghcard" data-key="'+esc(tk)+'" style="cursor:pointer;'+frame+'">'
       +'<div class="gh-head"><span class="gh-tk num">'+esc(tk)+"</span>"
       +'<span class="gh-nm">'+esc(nm)+"</span>"
       +'<span class="gh-px num">'+priceFmt(info.close)+"</span></div>"
@@ -581,6 +580,7 @@ if(ISG)(function(){
       +(dist!=null?' · 距 SMA50 <span class="'+cls(dist)+' num">'+pct(dist)+"</span>":"")
       +"</div>"
       +(extra||"")
+      +'<div class="gh-meta" style="color:var(--faint)">撳開個股左右對比圖 ›</div>'
       +"</div>";
   }
   /* Top5 表（v2.0：評分高→低 頭 5 · 10 欄 · 候選章 · 撳行 drill-down） */
@@ -621,15 +621,22 @@ if(ISG)(function(){
     +((D.dataIssues||[]).length
       ?'<div class="sum-note" style="color:var(--am)">⚠ 資料缺失：'+esc(D.dataIssues.join("、"))+'（已跳過，唔影響其他數據）</div>':"");
   $("golddash").innerHTML=h;
+  /* v4.1：英雄格撳開 drill-down（任何狀態都撳得 —— 強勢/WAITING/HOLDING 一視同仁） */
+  Array.prototype.forEach.call($("golddash").querySelectorAll(".ghcard[data-key]"),function(c){
+    c.addEventListener("click",function(){toggleDetail(c.getAttribute("data-key"),null)});
+  });
 
-  /* 金礦股 Top 5 表（v2.0：取代 17 行大表；候選章 = topPicks；撳行 drill-down） */
+  /* 金礦股 Top 5 表（v4.1：<details> 預設摺疊 —— 跟主頁「聚焦板塊、個股收埋」方向，
+     但 gold 頁唔成個剝走；候選章 = topPicks；撳行 drill-down） */
   var tops5={};
   (D.topPicks||[]).forEach(function(p){tops5[p.ticker]=1});
-  if(!(D.miners||[]).length){
-    $("top").innerHTML='<div class="empty">金礦股數據今日拉唔到</div>';
-  }else{
-    $("top").innerHTML=top5Table(top5of(D.miners),tops5,"GC=F");
-  }
+  var gtab=(D.miners||[]).length
+    ?top5Table(top5of(D.miners),tops5,"GC=F")
+    :'<div class="empty">金礦股數據今日拉唔到</div>';
+  var stp=$("sec_top");if(stp)stp.style.display="none";
+  $("top").innerHTML='<details class="tpg"><summary><b>金礦股 TOP 5</b>'
+    +'<span class="tpg-hint">評分高→低 · corr20 對 GC=F · 候選股有章 · 撳行睇圖</span></summary>'
+    +gtab+'</details>';
   Array.prototype.forEach.call($("top").querySelectorAll("tr[data-tk]"),function(tr){
     tr.addEventListener("click",function(){goldDrill(tr.getAttribute("data-tk"))});
   });
@@ -668,15 +675,15 @@ if(ISG)(function(){
     });
   }
 
-  /* 比特幣相關股 Top 5 表（v2.0：取代全宇宙大表；候選章 = btcTopPicks；撳行 drill-down） */
+  /* 比特幣相關股 Top 5 表（v4.1：<details> 預設摺疊；候選章 = btcTopPicks；撳行 drill-down） */
   var btops={};
   (D.btcTopPicks||[]).forEach(function(p){btops[p.ticker]=1});
-  bh+='<div class="sec"><i></i><b>BITCOIN STOCKS</b> // 比特幣相關股 Top 5（評分高→低 · corr20 對 IBIT）· 候選股有章（撳行睇圖）</div>';
-  if(!(D.btcStocks||[]).length){
-    bh+='<div class="panel"><div class="empty">比特幣相關股數據今日拉唔到</div></div>';
-  }else{
-    bh+=top5Table(top5of(D.btcStocks),btops,"IBIT");
-  }
+  var btab=(D.btcStocks||[]).length
+    ?top5Table(top5of(D.btcStocks),btops,"IBIT")
+    :'<div class="panel"><div class="empty">比特幣相關股數據今日拉唔到</div></div>';
+  bh+='<details class="tpg"><summary><b>比特幣相關股 TOP 5</b>'
+    +'<span class="tpg-hint">評分高→低 · corr20 對 IBIT · 候選股有章 · 撳行睇圖</span></summary>'
+    +btab+'</details>';
   $("btcdash").innerHTML=bh;
   Array.prototype.forEach.call($("btcdash").querySelectorAll("tr[data-tk]"),function(tr){
     tr.addEventListener("click",function(){btcDrill(tr.getAttribute("data-tk"))});
@@ -1393,7 +1400,9 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
 function sigStartAnnot(key){
   var t=turnOf(key),s=stateV2Of(t);
   if(s!=="TURNING"&&s!=="HOLDING")return null;
-  var d0=t.holdingSince||t.startDate;
+  /* v4.1：gold 頁錨觸發日 startDate（用戶口徑「訊號開始 08-05」= 觸發當日）；
+     US/HK 維持 holdingSince 唔變 */
+  var d0=ISG?(t.startDate||t.holdingSince):(t.holdingSince||t.startDate);
   if(!d0)return null;
   return{annot:{accent:"#22d3ee",marks:[{date:d0,glyph:"⚡",accent:"#22d3ee",
     vline:true,at:"bottom",text:"訊號開始 "+d0.slice(5)}]}};
