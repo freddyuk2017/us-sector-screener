@@ -1097,11 +1097,12 @@ function selectTab(i){
     +' 收 <span class="w num">'+priceFmt(lr[4])+"</span>"):"";
   $("chinfo").innerHTML="<b>"+esc(st.ticker)+"</b> "+esc(st.name||"")
     +(curKey==="XLK"&&TECH_OF[st.ticker]?" "+badge(TECH_LBL[TECH_OF[st.ticker]],"b-pp"):"")+ohlc
-    +' &nbsp;<span class="'+cls(chg)+'">'+pct(chg,2)+"</span> &nbsp;·&nbsp; 120日 · K線 · MA20";
+    +' &nbsp;<span class="'+cls(chg)+'">'+pct(chg,2)+"</span> &nbsp;·&nbsp; 120日 · K線 · MA20 · SMA50";
   requestAnimationFrame(drawChart);
 }
 
-/* ---- 純 canvas 圖：stock=K線+成交量+MA20；indexK=K線+MA20；indexL=收市線+MA20；
+/* ---- 純 canvas 圖：stock=K線+成交量+MA20+SMA50（v4.7 琥珀，V2.1 個股確認把尺）；
+   indexK=K線+MA20；indexL=收市線+MA20；
    indexS（v1.6 drill-down 板塊圖）= 紅綠 K 線（同左圖同期 120 日）+ SMA50（琥珀）
    + 最近交叉位標記。open 缺就合成（= 上日收），high/low 缺就開收較大/細值 ---- */
 function niceStep(r){var p=Math.pow(10,Math.floor(Math.log10(r)));var m=r/p;return(m<1.5?1:m<3.5?2:m<7.5?5:10)*p}
@@ -1153,10 +1154,22 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
       return [r[0],o,Math.max(hi,o,c),Math.min(lo,o,c),c,r[5]];
     });
   }
+  /* v4.7：stock 模式都計 SMA50（琥珀，V2.1 個股確認把尺，同 indexS 同色同款）——
+     用切窗前完整數列暖機（history 展開圖 v0/v1 patch 會提供 closesAll/v0），再對返顯示窗；
+     indexS/indexK/indexL 行為完全不變 */
+  var sma50st=null;
+  if(mode==="stock"){
+    var srcA=(typeof closesAll!=="undefined"&&closesAll)?closesAll:closes;
+    var offA=(typeof v0!=="undefined")?(v0|0):0;
+    var runA=0,full50=[];
+    for(var q=0;q<srcA.length;q++){runA+=srcA[q];if(q>=50)runA-=srcA[q-50];full50.push(q>=49?runA/50:null)}
+    sma50st=full50.slice(offA,offA+rows.length);
+  }
   var his=mode==="indexS"?bars.map(function(r){return r[2]}):rows.map(function(r){return r[2]!=null?r[2]:r[4]});
   var los=mode==="indexS"?bars.map(function(r){return r[3]}):rows.map(function(r){return r[3]!=null?r[3]:r[4]});
   var mn=Math.min.apply(null,los),mx=Math.max.apply(null,his);
   if(sma50){sma50.forEach(function(v){if(v!=null){if(v<mn)mn=v;if(v>mx)mx=v}})}
+  if(sma50st){sma50st.forEach(function(v){if(v!=null){if(v<mn)mn=v;if(v>mx)mx=v}})}   /* v4.7 stock SMA50 入埋價幅 */
   if(mx===mn)mx=mn*1.01;
   var pd=(mx-mn)*0.06;mn-=pd;mx+=pd;
   var iw=W-padL-padR;
@@ -1202,6 +1215,37 @@ function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:�
       if(!started){ctx.moveTo(px,py);started=true}else ctx.lineTo(px,py);
     }
     ctx.stroke();ctx.setLineDash([]);
+  }
+  /* v4.7：stock 模式 SMA50 琥珀線（同 indexS 同色 #f0a030、同 1.5px 實線）——
+     V2.1 個股確認就係睇「每隻股 vs 佢自己 SMA50」，冇呢條線用戶會攞 MA20 嚟對，誤導。
+     legend 左上角灰虛 MA20 + 琥珀 SMA50 一行寫清楚 */
+  if(mode==="stock"&&sma50st){
+    ctx.strokeStyle="#f0a030";ctx.lineWidth=1.5;ctx.beginPath();
+    var sst2=false;
+    for(var sj=0;sj<rows.length;sj++){
+      if(sma50st[sj]==null)continue;
+      var spx2=x(sj),spy2=y(sma50st[sj]);
+      if(!sst2){ctx.moveTo(spx2,spy2);sst2=true}else ctx.lineTo(spx2,spy2);
+    }
+    ctx.stroke();ctx.lineWidth=1;
+    ctx.font="10px Consolas,Menlo,monospace";
+    /* legend 左上角；⚡ vline mark 貼左邊嗰陣向右讓位（同 indexS 圖例口徑） */
+    var lgX2=padL+6;
+    if(opts.annot&&opts.annot.marks){
+      for(var vm3=0;vm3<opts.annot.marks.length;vm3++){
+        var mk3=opts.annot.marks[vm3];
+        if(!mk3.vline)continue;
+        for(var vi3=0;vi3<rows.length;vi3++){
+          if(rows[vi3][0]===mk3.date){
+            if(x(vi3)<lgX2+150&&x(vi3)+12>lgX2)lgX2=x(vi3)+12;
+            break;
+          }
+        }
+      }
+    }
+    ctx.fillStyle="rgba(215,221,230,.8)";ctx.fillText("-- MA20",lgX2,padT+8);
+    var w20=ctx.measureText("-- MA20").width;
+    ctx.fillStyle="#f0a030";ctx.fillText("— SMA50",lgX2+w20+10,padT+8);
   }
   if(mode==="indexS"&&sma50){
     /* v3.4 教學標註層（a）：陰影區 —— opts.annot.shade="below"|"above" 先畫；
