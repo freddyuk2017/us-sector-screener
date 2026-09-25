@@ -253,6 +253,13 @@ color:var(--faint);letter-spacing:.08em;pointer-events:none}
 padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;letter-spacing:.06em;
 font-family:Consolas,Menlo,monospace;margin-bottom:12px}
 .dback:hover,.dback:focus-visible{border-color:var(--cy);color:var(--cy);outline:none}
+/* ---- v5.7：drill 打開時長駐右下角「↑ 返回板塊」浮掣（fixed 視窗角落，唔遮圖表） ---- */
+.dbackf{position:fixed;right:14px;bottom:18px;z-index:60;display:none;
+border:1px solid var(--cy);background:var(--panel2);color:var(--cy);
+padding:12px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;
+letter-spacing:.06em;font-family:Consolas,Menlo,monospace;min-height:44px;
+box-shadow:0 4px 18px rgba(0,0,0,.6)}
+.dbackf:hover,.dbackf:focus-visible{background:var(--cy);color:#0a0c0e;outline:none}
 /* ---- footer ---- */
 .foot{margin-top:44px;font-size:11px;color:var(--faint);line-height:1.9;
 border-top:1px solid var(--line);padding-top:18px;letter-spacing:.03em}
@@ -689,6 +696,10 @@ function turnMeta(t){
 
 /* ---- 📡 倉位雷達：v4.0 頁面移除（signal_tracker.py 背景照跑，淨係唔再顯示） ---- */
 
+/* ---- v5.7：TT_SPEC 提前定義 —— gold hero 弱勢卡（ISG init 行 ~863）就用 ttArcC，
+     要用 TT_SPEC；var 賦值唔 hoist，留喺後面（舊行 2053）GLD 弱勢時成個 IIFE 冧。 ---- */
+var TT_SPEC=[[255,70,85],[255,61,242],[61,139,255],[34,211,238],[45,242,161]];
+
 /* ---- 🥇 硬資產板塊（gold.html 專用；IS_GOLD 先執行） ---- */
 function goldDrill(tk){
   if(curKey!=="GLD")toggleDetail("GLD",null);
@@ -1105,9 +1116,27 @@ function pickStocks(key){
   var leaders=w?(w.leaders||[]):[];
   return{picks:picks,watch:w,leaders:leaders};
 }
+/* ---- v5.7：drill 打開時長駐「↑ 返回板塊」浮掣 —— 撳佢收起 drill + smooth scroll 返去
+     撳入嚟嗰格原位。只喺 drill 打開時出現（fbShow），收起/切市場時消失；
+     fixed 右下角、z-index 高、≥44px 高，唔遮圖表內容（圖喺文檔流，浮掣喺視窗角落）。 ---- */
+var dbackf=document.createElement("button");
+dbackf.type="button";dbackf.id="dbackf";dbackf.className="dbackf";
+dbackf.textContent="↑ 返回板塊";dbackf.setAttribute("aria-label","收起並返回板塊列表");
+document.body.appendChild(dbackf);
+function fbShow(on){dbackf.style.display=on?"inline-block":"none"}   /* inline-block：stylesheet 預設 none，唔可以用 "" 靠 fallback */
+dbackf.addEventListener("click",function(){
+  var orig=detailOrigin;
+  if(curKey!=null){   /* 收起 drill（同 toggleDetail 關閉路徑一致） */
+    curKey=null;detailOrigin=null;$("detail").innerHTML="";
+    Array.prototype.forEach.call(document.querySelectorAll(".tile.act"),function(t){t.classList.remove("act")});
+  }
+  fbShow(false);
+  if(orig&&orig.isConnected)orig.scrollIntoView({behavior:"smooth",block:"center"});
+  else window.scrollTo({behavior:"smooth",top:0});
+});
 function toggleDetail(key,tile){
   if(curKey===key){
-    curKey=null;detailOrigin=null;$("detail").innerHTML="";
+    curKey=null;detailOrigin=null;$("detail").innerHTML="";fbShow(false);
     Array.prototype.forEach.call(document.querySelectorAll(".tile.act"),function(t){t.classList.remove("act")});
     return;
   }
@@ -1117,6 +1146,7 @@ function toggleDetail(key,tile){
   Array.prototype.forEach.call(document.querySelectorAll(".tile.act"),function(t){t.classList.remove("act")});
   if(tile)tile.classList.add("act");
   renderDetail(key);
+  fbShow(true);   /* v5.7：drill 打開 → 浮掣出現 */
 }
 function renderDetail(key){
   var sec=null;
@@ -1980,7 +2010,6 @@ function gaugeSvg(pos,bottom,top,N){
    填充規則照舊：刻度填到 留意值/100 為止，未填保持暗灰。
    指針 + 中央分數 + glow 用「分數所在位置」嘅光譜色（連續，唔係階段硬切）。
    純 SVG，無動畫依賴，static frame 完整。 ---- */
-var TT_SPEC=[[255,70,85],[255,61,242],[61,139,255],[34,211,238],[45,242,161]];
 function ttLerp(a,b,t){
   return [Math.round(a[0]+(b[0]-a[0])*t),Math.round(a[1]+(b[1]-a[1])*t),Math.round(a[2]+(b[2]-a[2])*t)];
 }
@@ -2618,7 +2647,7 @@ if(ISSTRONG)(function(){
     TECH_TURNS={};   /* v4.4：四細分退役，切市場都唔攞 */
     V3A=(D.v3||{}).active||{};V3VOID=(D.v3||{}).voided||[];V3CHARTS=(D.v3||{}).charts||{};   /* v5.2 */
     buildName();rebuildSecs();
-    curKey=null;detailOrigin=null;$("detail").innerHTML="";
+    curKey=null;detailOrigin=null;$("detail").innerHTML="";fbShow(false);   /* v5.7：切市場收 drill → 浮掣消失 */
     renderStrong();
     Array.prototype.forEach.call(document.querySelectorAll("#strtabs a"),function(a){
       a.className=a.getAttribute("data-m")===m?"on":""});
