@@ -498,7 +498,7 @@ var V3VOID=(D.v3||{}).voided||[];
 var V3CHARTS=(D.v3||{}).charts||{};
 function v3Active(key){return V3A[key]||null}
 /* ---- v5.9：V4 訊號（SMA50_BAR_CHOCH_STRUCT_V4_TOP15，v6.1 起加市值 Top15 資格閘）—— US 頁有 D.v4 就由 V4 驅動；
-   hk/gold/backtest 冇 D.v4 → 所有分派器原路落返 V3，行為不變 ---- */
+   v5.13 起 hk/gold 都有 D.v4 → 三個市場頁全部行 V4；backtest 頁冇 D.v4 → 原路落返 V3，行為不變 ---- */
 var V4A=(D.v4||{}).active||{};
 var V4VOID=(D.v4||{}).voided||[];
 var V4CHARTS=(D.v4||{}).charts||{};
@@ -1069,7 +1069,7 @@ function sigCardV4(rec){ /* v5.9：V4 卡 —— 每股 SL 進度 + 第二行 st
 }
 
 (function(){
-  var recs=sigList();   /* v5.9：US 有 D.v4 → V4 輪；否則 V3（hk/gold 原路） */
+  var recs=sigList();   /* v5.9/v5.13：US/HK/GOLD 有 D.v4 → V4 輪；backtest 原路 V3 */
   var cardFn=HASV4?sigCardV4:sigCardV3;
   var valid=recs.filter(function(r){return (r.validCount||0)>=1});
   var other=recs.filter(function(r){return (r.validCount||0)<1});
