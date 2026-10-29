@@ -1,0 +1,888 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>持倉 POSITIONS</title><style>
+:root{--bg:#0a0c0e;--panel:#12151a;--panel2:#0d1013;--line:#232830;--up:#26a769;--dn:#f0334b;
+--txt:#dde3ec;--dim:#93a0b0;--faint:#707b8c;--cy:#22d3ee;--am:#f0a030;--pp:#b78cf7}
+*{box-sizing:border-box;margin:0}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--txt);
+font-family:"Segoe UI","PingFang HK","PingFang SC","Microsoft JhengHei",sans-serif;
+background-image:linear-gradient(rgba(35,40,48,.13) 1px,transparent 1px),
+linear-gradient(90deg,rgba(35,40,48,.13) 1px,transparent 1px);
+background-size:40px 40px;min-height:100vh}
+.num{font-family:Consolas,Menlo,"Courier New",monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 22px 60px}
+a{color:var(--cy)}
+/* ---- header ---- */
+.hd{padding-bottom:20px;border-bottom:1px solid var(--line)}
+.brand{font-size:12px;letter-spacing:.24em;color:var(--dim)}
+.brand b{color:var(--cy);font-weight:600}
+.clock{font-family:Consolas,Menlo,monospace;font-size:23px;line-height:1.15;letter-spacing:.10em;
+color:#e8ecf2;text-shadow:0 0 16px rgba(215,221,230,.25),0 0 4px rgba(215,221,230,.35);
+margin-top:10px;font-variant-numeric:tabular-nums}
+.cdate{font-family:Consolas,Menlo,monospace;font-size:11.5px;color:var(--dim);
+letter-spacing:.16em;margin-top:6px}
+.meta-line{margin:10px 0 0;font-size:12.5px;color:var(--dim);letter-spacing:.04em;line-height:1.75}
+.meta-line.stale{color:var(--am);text-shadow:0 0 10px rgba(240,160,48,.35)}
+.stalewarn{color:var(--am);border:1px solid rgba(240,160,48,.55);border-radius:4px;
+padding:7px 12px;margin-top:8px;font-size:12.5px;letter-spacing:.03em;line-height:1.6}
+/* ---- tabs ---- */
+.tabs{display:flex;gap:10px;margin:20px 0 4px}
+.tabs a{min-width:140px;text-align:center;padding:10px 20px;border:1px solid var(--line);
+background:var(--panel);color:var(--dim);text-decoration:none;font-size:14px;
+letter-spacing:.12em;border-radius:4px}
+.tabs a.on{color:#0a0c0e;background:var(--cy);border-color:var(--cy);font-weight:700}
+/* v3.7：tab 視覺分層 —— 三個反彈雷達主頁做主角款，附加參考/教學/紀錄收細收暗 */
+.tabs a.pri{color:var(--txt);border-color:rgba(34,211,238,.45);font-weight:600}
+.tabs a.pri.on{color:#0a0c0e;background:var(--cy);border-color:var(--cy);font-weight:700}
+.tabs a.sub{font-size:12px;padding:8px 14px;min-width:0;color:var(--faint);letter-spacing:.06em}
+/* v3.6：策略聲明行（市場頁 nav 下面，一句講清楚係咩策略 + 導去 STRONG） */
+.stratline{font-size:12.5px;color:var(--dim);border:1px solid var(--line);border-radius:6px;
+background:var(--panel);padding:8px 14px;margin:10px 0 4px;letter-spacing:.04em;line-height:1.7}
+.stratline a{color:var(--cy);text-decoration:none}
+.stratline a:hover{text-decoration:underline}
+/* ---- section title ---- */
+.sec{margin:36px 0 14px;font-size:13.5px;letter-spacing:.14em;color:var(--dim);
+font-family:Consolas,Menlo,monospace}
+.sec i{display:inline-block;width:9px;height:9px;background:var(--cy);margin-right:10px}
+.sec b{color:#e8ecf2;font-weight:600}
+/* ---- badges ---- */
+.badge{display:inline-block;font-size:11.5px;padding:3px 10px;border-radius:3px;
+letter-spacing:.08em;border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.b-cy{border-color:var(--cy);color:var(--cy)}
+.b-up{border-color:var(--up);color:var(--up)}
+.b-dn{border-color:var(--dn);color:var(--dn)}
+.b-am{border-color:var(--am);color:var(--am)}
+.b-pp{border-color:var(--pp);color:var(--pp)}
+/* ---- signal / break cards ---- */
+.sig{border:1px solid var(--cy);
+box-shadow:0 0 16px rgba(34,211,238,.20),inset 0 0 16px rgba(34,211,238,.05);
+background:var(--panel);border-radius:6px;padding:18px 20px;margin-bottom:14px}
+.sig.missed{border-color:var(--line);box-shadow:none}
+.sig .meta2{font-size:12px;color:var(--dim);margin-top:8px;letter-spacing:.04em}
+/* ---- treemap ---- */
+.tm{display:flex;flex-wrap:wrap;gap:6px}
+.tile{flex-grow:1;flex-basis:180px;min-height:124px;border:1px solid var(--line);
+border-radius:4px;padding:16px;cursor:pointer;position:relative;background:var(--panel);
+transition:border-color .15s,box-shadow .15s}
+.tile:hover{border-color:#39414e}
+.tile.act{border-color:var(--cy);box-shadow:0 0 14px rgba(34,211,238,.28)}
+.tile.static{cursor:default}
+.t-etf{font-size:21px;font-weight:700;color:#e8ecf2;letter-spacing:.04em;
+font-family:Consolas,Menlo,monospace}
+.t-nm{font-size:12px;color:var(--dim);margin-top:4px}
+.t-row{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px}
+.t-st{font-size:24px;color:#e8ecf2;font-family:Consolas,Menlo,monospace}
+.t-lbl{font-size:10px;color:var(--faint);letter-spacing:.1em}
+.tb-row{position:absolute;top:9px;right:9px;display:flex;gap:4px}
+.tb{font-size:10px;padding:2px 6px;border-radius:2px;background:rgba(10,12,14,.7);
+border:1px solid var(--line);color:var(--dim);font-family:Consolas,Menlo,monospace}
+.tbc{border-color:var(--cy);color:var(--cy)}
+.tbp{border-color:var(--pp);color:var(--pp)}
+.tbu{border-color:var(--up);color:var(--up)}
+.tbam{border-color:var(--am);color:var(--am)}
+/* ---- 五態框色（v1.2：所有狀態落格仔/卡，唔再文字列表） ---- */
+.tile.trn{border-color:var(--cy);box-shadow:0 0 14px rgba(34,211,238,.28)}
+.tile.hld{border-color:var(--up);box-shadow:0 0 14px rgba(38,167,105,.24)}
+.sig.hld{border-color:var(--up);
+box-shadow:0 0 16px rgba(38,167,105,.22),inset 0 0 16px rgba(38,167,105,.05)}
+.wcard.gold{border-color:var(--am);box-shadow:0 0 14px rgba(240,160,48,.16)}
+.panel.fr-cy{border-color:var(--cy);box-shadow:0 0 16px rgba(34,211,238,.20)}
+.panel.fr-up{border-color:var(--up);box-shadow:0 0 16px rgba(38,167,105,.20)}
+.panel.fr-am{border-color:var(--am);box-shadow:0 0 12px rgba(240,160,48,.16)}
+/* ---- 反彈雷達 bento 格仔牆（v1.9：#1 英雄格佔兩格闊（最高分配最光框）· 標準格 ~200px
+   · 板塊名貼錶頂冇中間真空；v1.8 框色跟分數光譜 · 光度/glow 跟分數，JS inline 驅動） ---- */
+.ttgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}
+.ttile{position:relative;min-height:210px;border:1.5px solid var(--line);border-radius:6px;
+background:var(--panel);cursor:pointer;
+display:flex;flex-direction:column;align-items:center;justify-content:center;padding:26px 10px 12px;
+transition:border-color .15s,box-shadow .15s,filter .15s}
+.ttile:hover{filter:brightness(1.18)}
+.ttile.hero{grid-column:span 2;aspect-ratio:auto}
+.tt-nm{font-size:11.5px;color:var(--dim);text-align:center;line-height:1.5;
+max-width:100%;margin-bottom:2px;overflow-wrap:break-word}
+.tt-g{width:86%}
+.hero .tt-g{width:46%;min-width:170px}
+.tt-day{position:absolute;top:9px;right:9px}
+.tt-dist{font-family:Consolas,Menlo,monospace;font-size:12px;color:var(--dim);margin-top:4px}
+.tt-top3{margin-top:8px;font-size:10.5px;color:var(--faint);line-height:1.75;
+text-align:center;letter-spacing:.02em}
+.tt-top3 b{color:var(--dim);font-family:Consolas,Menlo,monospace}
+.scorenote{margin-top:12px;font-size:11px;color:var(--faint);letter-spacing:.04em;
+line-height:1.8;font-family:Consolas,Menlo,monospace}
+/* ---- 強勢板塊 list（v1.8：SMA50 之上 · 行式 + 270° 火焰橙速度錶） ---- */
+.strrow{display:flex;align-items:center;gap:14px;background:var(--panel);
+border:1px solid var(--line);border-radius:6px;padding:10px 16px;margin-bottom:8px;
+cursor:pointer;transition:border-color .15s}
+.strrow:hover{border-color:rgba(255,140,26,.5);box-shadow:0 0 12px rgba(255,140,26,.12)}
+.str-rk{font-family:Consolas,Menlo,monospace;font-size:15px;color:#FF8C1A;
+font-weight:700;flex:0 0 36px}
+.str-nm{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px}
+.str-nmt{min-width:0}
+.str-code{font-family:Consolas,Menlo,monospace;font-size:12px;color:var(--faint)}
+.str-ret{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:15px}
+.str-lbl{font-size:10px;color:var(--faint);letter-spacing:.1em}
+.str-g{flex:0 0 88px}
+/* ---- 硬資產英雄格（v2.0 gold.html：GC=F/IBIT 兩卡並排 · 強勢橙錶固定光 / 弱勢冷錶框光跟分數
+   · 大字狀態標籤 · mobile <768px 上下叠） ---- */
+.ghgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ghcard{position:relative;border:1.5px solid var(--line);border-radius:6px;
+background:var(--panel);padding:16px 18px 14px;
+display:flex;flex-direction:column;align-items:center;
+transition:border-color .15s,box-shadow .15s}
+.gh-head{display:flex;align-items:baseline;gap:10px;width:100%}
+.gh-tk{font-size:20px;font-weight:700}
+.gh-nm{font-size:12px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gh-px{margin-left:auto;font-family:Consolas,Menlo,monospace;font-size:26px;font-weight:700}
+.gh-state{font-size:20px;font-weight:700;letter-spacing:.06em;margin:12px 0 4px;text-align:center}
+.gh-g{width:200px;max-width:75%}
+.gh-meta{font-size:12.5px;color:var(--dim);margin-top:6px;font-family:Consolas,Menlo,monospace}
+.gh-sub{font-size:11px;color:var(--faint);margin-top:4px;font-family:Consolas,Menlo,monospace}
+@media (max-width:767px){.ghgrid{grid-template-columns:1fr}}
+/* ---- detail / chart ---- */
+.detail{background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--cy);
+border-radius:6px;padding:20px;margin-top:12px}
+.detail h3{font-size:16px;letter-spacing:.06em;font-weight:600}
+.detail .sub{font-size:12px;color:var(--dim);margin-top:4px}
+.stabs{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 12px}
+.stab{border:1px solid var(--line);background:var(--panel2);color:var(--dim);
+padding:8px 16px;border-radius:4px;cursor:pointer;
+font-family:Consolas,Menlo,monospace;font-size:13px;letter-spacing:.05em}
+.stab:hover{border-color:#39414e;color:var(--txt)}
+.stab.on{background:var(--cy);color:#0a0c0e;border-color:var(--cy);font-weight:700}
+.ch-info{font-family:Consolas,Menlo,monospace;font-size:13px;color:var(--dim);
+margin:4px 0 8px;letter-spacing:.04em}
+.ch-info b{color:#e8ecf2;font-size:15px}
+.ch-grid{display:grid;grid-template-columns:1fr 1fr;margin-top:6px}
+.ch-col{min-width:0;padding-right:14px}
+.ch-right{border-left:1px solid var(--line);padding-left:14px;padding-right:0}
+canvas#chart,canvas#ixchart{width:100%;height:340px;display:block;background:var(--panel2);
+border:1px solid var(--line);border-radius:4px}
+/* ---- tables ---- */
+.twrap{overflow-x:auto}
+table.dt{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:12px}
+.dt th{color:var(--dim);font-weight:400;font-size:11.5px;letter-spacing:.10em;
+text-align:left;padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.dt td{padding:9px 8px;border-bottom:1px solid #1b2027;vertical-align:middle}
+.dt .r{text-align:right}
+.dt tr:last-child td{border-bottom:none}
+.dt .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+.up{color:var(--up)}.dn{color:var(--dn)}.flat{color:var(--faint)}.w{color:#e8ecf2}
+.cy{color:var(--cy)}
+/* ---- watchlist（gauge 卡陣） ---- */
+.wl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.wcard{background:var(--panel);border:1px solid var(--line);border-radius:6px;
+padding:14px 16px;cursor:pointer;transition:border-color .15s}
+.wcard:hover{border-color:#39414e}
+.wcard.brk{border-color:var(--cy);box-shadow:0 0 14px rgba(34,211,238,.18)}
+.wl-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wl-name{font-size:14px;font-weight:600}
+.wl-sub{font-size:11px;color:var(--faint);margin-top:3px;letter-spacing:.04em}
+.wl-grid .gauge{margin:10px auto 0;width:100%;max-width:170px}
+.wl-grid .chip{font-size:11px;padding:4px 8px}
+.wl-status{font-size:12px;margin-top:8px;letter-spacing:.04em}
+.st-am{color:var(--am)}.st-flat{color:var(--faint)}.st-up{color:var(--up)}
+.gauge svg{display:block;width:100%;height:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chip{border:1px solid var(--line);background:var(--panel2);border-radius:4px;
+padding:6px 12px;font-size:12px}
+.lead-lbl{font-size:11px;color:var(--faint);letter-spacing:.12em;margin-top:14px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px 18px}
+.empty{color:var(--dim);font-size:13px;padding:6px 0}
+.tpg-head{font-size:13px;margin:16px 0 2px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tpg-head:first-child{margin-top:2px}
+/* ---- v3.0 Phase 2A：頂部摘要帶（時鐘退做配角；四件最重要嘅事一眼睇晒） ---- */
+.sumb{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 0}
+.sumt{border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:12px 14px;min-width:0}
+.sum-lb{font-size:10.5px;color:var(--faint);letter-spacing:.14em;font-family:Consolas,Menlo,monospace}
+.sum-n{font-size:26px;font-weight:700;color:#e8ecf2;font-family:Consolas,Menlo,monospace;
+margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sum-sub{font-size:11.5px;color:var(--dim);margin-top:4px;line-height:1.6;min-height:1.2em}
+.sum-note{margin-top:10px;font-size:11px;color:var(--faint);letter-spacing:.05em;
+font-family:Consolas,Menlo,monospace;line-height:1.8}
+/* ---- v3.0 四狀態卡（INVALID 用紅但唔搶眼） ---- */
+.sig.inv{border-color:rgba(240,51,75,.45);box-shadow:0 0 10px rgba(240,51,75,.08)}
+.hmeta{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 18px;
+margin-top:10px;font-size:12.5px;color:var(--dim)}
+.hmeta .num{color:#e8ecf2}
+.hm-lb{color:var(--faint);font-size:11px;letter-spacing:.08em}
+/* ---- v4.9 V2.2：HOLDING/TURNING 卡定格監察股清單 + drill-down 弱股摺疊 ---- */
+.fxmon{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+.fxmon-hd{font-size:11px;color:var(--faint);letter-spacing:.12em;margin-bottom:5px}
+.fxrow{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:3px 0;
+color:var(--dim);flex-wrap:nowrap}   /* v5.5：股票同佢嘅入/走日期唔准斷行拆散 */
+.fxrow .num{color:#e8ecf2}
+.fx-tk{min-width:56px;font-weight:700;flex:0 0 auto}
+.fx-st{min-width:0;flex:0 0 auto}
+.fx-dt{margin-left:auto;white-space:nowrap}
+/* v5.9：V4 卡每股第二行 —— structure 狀態 + 觸發日 low vs SMA50 距離（目視覆核用） */
+.fxsub{font-size:11px;color:var(--faint);padding:0 0 4px 64px;white-space:normal}
+.fxrow.fx-off+.fxsub{opacity:.55}
+details.weakfold{margin-top:10px}
+details.weakfold>summary{font-size:12px;color:var(--dim)}
+details.weakfold .twrap{padding:4px 10px 10px}
+/* ---- v3.0 分數解釋 popover（fixed 計位 · 滑鼠/鍵盤/觸控都用得 · Esc/撳出面閂） ---- */
+.pinfo{display:inline-block;border:1px solid var(--line);background:var(--panel2);color:var(--faint);
+border-radius:3px;font-size:10px;padding:0 7px;cursor:pointer;margin-left:6px;line-height:1.7;
+font-family:Consolas,Menlo,monospace;vertical-align:middle}
+.pinfo:hover,.pinfo:focus-visible{color:var(--cy);border-color:var(--cy);outline:none}
+.popfix{position:absolute;z-index:60;background:var(--panel2);border:1px solid #39414e;
+border-radius:6px;padding:10px 12px;font-size:11.5px;color:var(--dim);line-height:1.9;
+box-shadow:0 6px 20px rgba(0,0,0,.55);text-align:left;cursor:default}
+.popfix b{color:#e8ecf2}
+.popfix .pr{display:flex;justify-content:space-between;gap:12px;white-space:nowrap}
+/* ---- v3.0 Top5 組預設收起（details/summary 原生鍵盤可用） ---- */
+details.tpg{border:1px solid var(--line);border-radius:6px;background:var(--panel);margin-bottom:10px}
+details.tpg>summary{cursor:pointer;list-style:none;padding:11px 14px;display:flex;
+align-items:center;gap:10px;flex-wrap:wrap;font-size:13px}
+details.tpg>summary:before{content:"▸";color:var(--faint)}
+details.tpg[open]>summary:before{content:"▾"}
+details.tpg>summary:hover{background:rgba(35,40,48,.35)}
+details.tpg>summary:focus-visible{outline:1.5px solid var(--cy);outline-offset:-2px}
+details.tpg[open]>summary{border-bottom:1px solid var(--line)}
+details.tpg .twrap{padding:4px 10px 10px}
+.tpg-hint{margin-left:auto;font-size:10.5px;color:var(--faint);letter-spacing:.08em}
+/* ---- v3.0 撳行提示 + 焦點態（§9/§14：唔准齋靠 hover） ---- */
+.str-hint{display:none;font-size:10.5px;color:var(--faint);letter-spacing:.06em;white-space:nowrap}
+@media (min-width:768px){.str-hint{display:inline}}
+.tt-hint{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:9px;
+color:var(--faint);letter-spacing:.08em;pointer-events:none}
+.strrow:focus-visible,.ttile:focus-visible,.sig[data-key]:focus-visible,details.tpg>summary:focus-visible,
+[role="button"]:focus-visible{outline:1.5px solid var(--cy);outline-offset:2px}
+.ttile:focus-visible{outline-offset:-2px}
+.dback{border:1px solid var(--line);background:var(--panel2);color:var(--dim);
+padding:6px 14px;border-radius:4px;cursor:pointer;font-size:12px;letter-spacing:.06em;
+font-family:Consolas,Menlo,monospace;margin-bottom:12px}
+.dback:hover,.dback:focus-visible{border-color:var(--cy);color:var(--cy);outline:none}
+/* ---- v5.7：drill 打開時長駐右下角「↑ 返回板塊」浮掣（fixed 視窗角落，唔遮圖表） ---- */
+.dbackf{position:fixed;right:14px;bottom:18px;z-index:60;display:none;
+border:1px solid var(--cy);background:var(--panel2);color:var(--cy);
+padding:12px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;
+letter-spacing:.06em;font-family:Consolas,Menlo,monospace;min-height:44px;
+box-shadow:0 4px 18px rgba(0,0,0,.6)}
+.dbackf:hover,.dbackf:focus-visible{background:var(--cy);color:#0a0c0e;outline:none}
+/* ---- footer ---- */
+.foot{margin-top:44px;font-size:11px;color:var(--faint);line-height:1.9;
+border-top:1px solid var(--line);padding-top:18px;letter-spacing:.03em}
+/* ---- v5.5：drill 同步工具列 + 展開全部個股圖 + 統一大主掣 ---- */
+.ch-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 10px;
+font-family:Consolas,Menlo,monospace;font-size:12px;color:var(--dim)}
+.tbtn{border:1px solid var(--line);background:var(--panel2);color:var(--dim);
+padding:8px 14px;border-radius:4px;cursor:pointer;font:inherit;font-size:12.5px;
+min-height:40px;letter-spacing:.04em}
+.tbtn:hover{border-color:var(--cy);color:var(--cy)}
+.tbtn.on{background:var(--cy);color:#0a0c0e;border-color:var(--cy);font-weight:700}
+.tsep{color:var(--faint)}
+.ch-range{margin-left:auto;color:var(--faint);font-size:11.5px;letter-spacing:.03em}
+.stab.xall{border-style:dashed;color:var(--cy)}
+canvas#chart.sync,canvas#ixchart.sync,canvas.xcv{cursor:grab;touch-action:pan-y}
+canvas#chart.sync:active,canvas#ixchart.sync:active,canvas.xcv:active{cursor:grabbing}
+.xch{margin-top:14px}
+.xch .ch-info{margin-bottom:4px}
+canvas.xcv{width:100%;display:block;background:var(--panel2);
+border:1px solid var(--line);border-radius:4px}
+.abtn{display:flex;align-items:center;justify-content:center;min-height:40px;margin-top:10px;
+border:1px solid rgba(34,211,238,.45);border-radius:4px;background:rgba(34,211,238,.07);
+color:var(--cy);font-size:13px;letter-spacing:.10em;font-family:Consolas,Menlo,monospace}
+.sig:hover .abtn,.ttile:hover .abtn{background:rgba(34,211,238,.15);border-color:var(--cy)}
+.ttile .abtn{width:100%;flex:0 0 auto;margin-top:auto}
+.fx-off{opacity:.55}
+/* ---- responsive ---- */
+@media (max-width:1199px){.wl-grid{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:900px){
+.wrap{padding:18px 14px 50px}
+.clock{font-size:26px}
+.sumb{grid-template-columns:repeat(2,1fr);gap:10px}
+.sum-n{font-size:21px}
+.tile{flex-basis:150px}
+.wl-grid{grid-template-columns:repeat(2,1fr)}
+.str-g{flex-basis:72px}
+.ch-grid{grid-template-columns:1fr}
+.ch-col{padding-right:0}
+.ch-right{border-left:none;border-top:1px solid var(--line);padding-left:0;
+padding-top:14px;margin-top:14px}
+.dt{font-size:12px}
+}
+@media (max-width:767px){
+/* v2.2 hotfix：雷達 grid fluid 化 —— minmax(0,1fr) 殺死 min-content 撐爆 grid，
+   格 + 英雄格 max-width:100%，目標 320px 都零橫向溢出 */
+.ttgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ttile{min-width:0;max-width:100%}
+.ttile.hero{grid-column:1/-1;max-width:100%;box-sizing:border-box}
+.tt-g{max-width:100%}
+.hero .tt-g{width:56%;min-width:0;max-width:220px}
+.tt-nm{min-width:0}
+/* v2.2 hotfix：強勢行統一單行 nowrap 版式（唔准 wrap）—— 資訊區 flex:1 + min-width:0
+   食晒鬆動位，名太長 ellipsis；錶固定 64px 喺右，行高由錶固定 → 全部行一致 */
+.strrow{flex-wrap:nowrap;gap:8px;padding:10px 10px}
+.strrow>span:nth-child(2){flex:1 1 auto;min-width:0}
+.str-nm{font-size:12.5px;display:flex;align-items:center;gap:4px}
+.str-nmt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 auto}
+.str-nm .badge{flex:0 0 auto;font-size:9px;padding:2px 5px;letter-spacing:.04em}
+.str-code{font-size:11px}
+.str-rk{flex:0 0 28px;font-size:13px}
+.str-ret{margin-left:0;font-size:13px;flex:0 0 auto;text-align:right}
+.str-g{flex:0 0 64px}
+/* gold 英雄格窄屏：大字標籤收細一格，卡頭名 ellipsis */
+.gh-state{font-size:16px}
+.gh-nm{flex:1;min-width:0}
+.gh-px{font-size:22px}
+}
+@media (max-width:599px){.wl-grid{grid-template-columns:1fr}.dt .nm{max-width:90px}}
+/* ---- 教學頁（v2.1 guide.html：概念卡 + 活示範錶 + v3.3 真實 K 線圖 + 狀態流轉圖；
+   mobile tabs 4 個要 wrap 先擺得落） ---- */
+.gdcard{border:1.5px solid var(--line);border-radius:6px;background:var(--panel);
+padding:22px 22px 18px;margin-bottom:18px}
+.gd-h{font-size:17px;font-weight:700;letter-spacing:.05em;margin-bottom:8px}
+.gd-tag{font-size:11px;font-weight:400;color:var(--faint);letter-spacing:.08em;margin-left:8px}
+.gd-def{font-size:14px;line-height:1.9;margin-bottom:6px}
+.gd-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;align-items:start}
+.gd-sub{font-size:12px;color:var(--cy);letter-spacing:.1em;margin:14px 0 6px;
+font-family:Consolas,Menlo,monospace}
+.gd-ul{list-style:none;padding:0}
+.gd-ul li{font-size:13px;color:var(--dim);line-height:1.85;padding-left:16px;position:relative}
+.gd-ul li:before{content:"·";position:absolute;left:2px;color:var(--faint)}
+.gd-ul li b{color:var(--txt);font-weight:600}
+.gd-demo{border:1px dashed var(--line);border-radius:6px;background:var(--panel2);
+padding:14px 10px 10px;text-align:center;margin-bottom:12px}
+.gd-g{width:220px;max-width:82%;margin:0 auto}
+.gd-cap{font-size:11.5px;color:var(--faint);margin-top:6px;line-height:1.7}
+.gd-cap b{color:var(--dim)}
+.gd-svg{width:100%;height:auto;display:block}
+.gd-kline{width:100%;height:260px;display:block;background:var(--panel2);
+border:1px solid var(--line);border-radius:6px;margin-top:14px}
+.gd-live{display:inline-block;font-size:10px;color:var(--cy);border:1px solid rgba(34,211,238,.4);
+border-radius:3px;padding:1px 7px;letter-spacing:.1em;margin-bottom:8px}
+.gd-flow{display:flex;gap:8px;align-items:stretch;margin-top:10px}
+.gd-step{flex:1;border:1.5px solid var(--line);border-radius:6px;background:var(--panel2);
+padding:12px 10px;text-align:center}
+.gd-step b{display:block;font-size:13px;margin-bottom:5px}
+.gd-step span{font-size:11px;color:var(--dim);line-height:1.7;display:block}
+.gd-arrow{align-self:center;color:var(--faint);font-size:16px;flex:0 0 auto}
+@media (max-width:767px){
+.tabs{flex-wrap:wrap}
+.tabs a{flex:1 1 40%;min-width:0;padding:10px 8px}
+.gd-grid{grid-template-columns:1fr}
+.gd-flow{flex-direction:column}
+.gd-arrow{transform:rotate(90deg)}
+}
+/* v4.3 history 頁：行展開板塊+市值TOP3對比圖（只 history.html 用） */
+tr.hrec{cursor:pointer}
+tr.hrec:hover td{background:#131a24}
+tr.hrec.on td{background:#101722}
+.hxhint{color:var(--cy);font-size:11px;white-space:nowrap;text-align:center}
+tr.hx{display:none}
+tr.hx>td{padding:10px 8px 14px;background:#0c1016}
+.hxgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;
+width:calc(100vw - 44px);max-width:880px}  /* v4.3-fix：td 跟 16 欄表咁闊，
+唔限嘅話圖會畫成表闊（~1150px），手機要橫掃先睇到；用 vw 鎖返視口闊 */
+.hxp-item{background:var(--panel2);border:1px solid var(--line);border-radius:8px;
+padding:6px 6px 2px;min-width:0}
+.hxp-item canvas{width:100%;display:block}
+.hxp-cap{font-size:11.5px;color:var(--dim);padding:2px 2px 6px;line-height:1.5}
+.hxp-cap b{color:var(--txt)}
+.hxnote{font-size:11.5px;color:var(--faint);padding:0 2px 8px}
+@media (max-width:640px){.hxgrid{grid-template-columns:1fr}}
+
+.hold-banner{background:rgba(240,51,75,.13);border:1px solid var(--dn);border-radius:8px;
+ padding:14px 18px;margin:16px 0 4px;font-size:14.5px;line-height:1.7}
+.hold-banner b{color:var(--dn)}
+.hold-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0 4px}
+.hold-cell{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.hold-cell .v{font-size:24px;font-weight:700;font-family:Consolas,Menlo,monospace;color:#e8ecf2;margin-top:2px}
+.hold-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.hold-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.hold-card canvas{width:100%;display:block;margin-top:10px;background:var(--panel2);
+ border:1px solid var(--line);border-radius:6px}
+.hold-tk{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hold-tk .t{font-size:22px;font-weight:700;font-family:Consolas,Menlo,monospace;color:#e8ecf2}
+.hold-tk .n{color:var(--dim);font-size:12.5px}
+.hold-rows{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px;margin-top:10px;font-size:12.5px}
+.hold-rows .k{color:var(--faint)}
+.hold-rows .v{font-family:Consolas,Menlo,monospace;color:var(--txt);text-align:right}
+.hold-badge{font-size:16px;font-weight:800;letter-spacing:.1em;padding:6px 15px;border-radius:6px;
+ border:1.5px solid;display:inline-block;margin-left:auto}
+.hold-badge.keep{color:var(--up);border-color:var(--up);background:rgba(38,167,105,.09)}
+.hold-badge.be{color:var(--am);border-color:var(--am);background:rgba(240,160,48,.09)}
+.hold-badge.exit{color:#fff;border-color:var(--dn);background:var(--dn)}
+.hold-note{font-size:11.5px;color:var(--faint);margin-top:8px;line-height:1.6}
+@media (max-width:640px){.hold-grid{grid-template-columns:1fr}
+ .hold-sum{grid-template-columns:repeat(2,1fr)}.hold-badge{font-size:14px;padding:5px 11px}}
+</style></head><body>
+<div class="wrap">
+<header class="hd">
+  <div class="brand"><b>&#9632;</b> BOARD PULSE // 持倉 POSITIONS</div>
+  <div class="meta-line">Freddy 真實持倉 · V4 離場規則追蹤 · 行情日期 2026-10-28 · 網頁生成 2026-10-29 09:59:07（香港時間 UTC+8）</div>
+</header>
+<div class="tabs"><a href="index.html" class="pri">美股 US</a><a href="hk.html" class="pri">港股 HK</a><a href="gold.html" class="pri">硬資產 HARD</a><a href="holdings.html" class="pri on">持倉 MINE</a><a href="strong.html" class="sub">附加參考：強勢</a><a href="guide.html" class="sub">教學 GUIDE</a><a href="history.html" class="sub">紀錄 HIST</a></div>
+<div class="sec"><i></i><b>持倉 POSITIONS</b> // Freddy 真實持倉 · V4 離場規則（SL10 / BE10 / TRAIL8）每日追蹤</div><div class="hold-sum"><div class="hold-cell"><div class="sum-lb">持倉數</div><div class="v">4</div><div class="sum-sub">4 持倉中 · 0 已離場</div></div><div class="hold-cell"><div class="sum-lb">平均 P&amp;L</div><div class="v" style="color:var(--dn)"><span class='dn num'>-0.1%</span></div><div class="sum-sub">按買入價計 · 未離場用最新收市</div></div><div class="hold-cell"><div class="sum-lb">最接近 SL</div><div class="v">TJX</div><div class="sum-sub">距離 SL 5.5%</div></div><div class="hold-cell"><div class="sum-lb">行情日期</div><div class="v" style="font-size:19px;padding-top:4px">2026-10-28</div><div class="sum-sub">止蝕/保本以收市後數據計</div></div></div><div class="hold-grid"><div class="hold-card"><div class="hold-tk"><span class="t">ECL</span><span class="n">Ecolab · Materials（XLB）</span><span class="hold-badge keep">KEEP 持有</span></div><div class="hold-rows"><div class="k">買入</div><div class="v">292.28 @ 2026-10-16</div><div class="k">最新收市</div><div class="v">292.41（2026-10-28）</div><div class="k">P&amp;L（未實現）</div><div class="v" style="color:var(--up)"><span class='up num'>+0.0%</span></div><div class="k">而家止蝕 SL</div><div class="v">263.05</div><div class="k">距離 SL</div><div class="v"><span style="color:var(--txt)">11.2%</span></div><div class="k">保本 BE</div><div class="v" style="font-family:inherit;text-align:right">未激活（high 未達買入價 +10%）</div><div class="k">狀態</div><div class="v" style="font-family:inherit;text-align:right">持倉中</div></div><canvas data-tk="ECL"></canvas><div class="hold-note">來源：XLB 2026-10-15 V4 訊號輪（<a href="history.html" style="color:var(--cy)">紀錄 HIST</a> 每日自動推進）</div></div><div class="hold-card"><div class="hold-tk"><span class="t">LIN</span><span class="n">Linde plc · Materials（XLB）</span><span class="hold-badge keep">KEEP 持有</span></div><div class="hold-rows"><div class="k">買入</div><div class="v">492.74 @ 2026-10-16</div><div class="k">最新收市</div><div class="v">508.16（2026-10-28）</div><div class="k">P&amp;L（未實現）</div><div class="v" style="color:var(--up)"><span class='up num'>+3.1%</span></div><div class="k">而家止蝕 SL</div><div class="v">443.47</div><div class="k">距離 SL</div><div class="v"><span style="color:var(--txt)">14.6%</span></div><div class="k">保本 BE</div><div class="v" style="font-family:inherit;text-align:right">未激活（high 未達買入價 +10%）</div><div class="k">狀態</div><div class="v" style="font-family:inherit;text-align:right">持倉中</div></div><canvas data-tk="LIN"></canvas><div class="hold-note">來源：XLB 2026-10-15 V4 訊號輪（<a href="history.html" style="color:var(--cy)">紀錄 HIST</a> 每日自動推進）</div></div><div class="hold-card"><div class="hold-tk"><span class="t">MAR</span><span class="n">Marriott International · Consumer Discretionary（XLY）</span><span class="hold-badge keep">KEEP 持有</span></div><div class="hold-rows"><div class="k">買入</div><div class="v">388.62 @ 2026-10-16*</div><div class="k">最新收市</div><div class="v">394.40（2026-10-28）</div><div class="k">P&amp;L（未實現）</div><div class="v" style="color:var(--up)"><span class='up num'>+1.5%</span></div><div class="k">而家止蝕 SL</div><div class="v">349.76</div><div class="k">距離 SL</div><div class="v"><span style="color:var(--txt)">12.8%</span></div><div class="k">保本 BE</div><div class="v" style="font-family:inherit;text-align:right">未激活（high 未達買入價 +10%）</div><div class="k">狀態</div><div class="v" style="font-family:inherit;text-align:right">持倉中</div></div><canvas data-tk="MAR"></canvas><div class="hold-note">來源：手動持倉 · 本頁獨立按 V4 規則每日推進 · 推斷買入日：2026-10-16 開市 388.71 同實際買入價相差 0.02%（±0.5% 內）</div></div><div class="hold-card"><div class="hold-tk"><span class="t">TJX</span><span class="n">TJX Companies · Consumer Discretionary（XLY）</span><span class="hold-badge keep">KEEP 持有</span></div><div class="hold-rows"><div class="k">買入</div><div class="v">145.79 @ 2026-10-16*</div><div class="k">最新收市</div><div class="v">138.39（2026-10-28）</div><div class="k">P&amp;L（未實現）</div><div class="v" style="color:var(--dn)"><span class='dn num'>-5.1%</span></div><div class="k">而家止蝕 SL</div><div class="v">131.21</div><div class="k">距離 SL</div><div class="v"><span style="color:var(--txt)">5.5%</span></div><div class="k">保本 BE</div><div class="v" style="font-family:inherit;text-align:right">未激活（high 未達買入價 +10%）</div><div class="k">狀態</div><div class="v" style="font-family:inherit;text-align:right">持倉中</div></div><canvas data-tk="TJX"></canvas><div class="hold-note">來源：手動持倉 · 本頁獨立按 V4 規則每日推進 · 推斷買入日：2026-10-16 開市 145.98 同實際買入價相差 0.13%（±0.5% 內）</div></div></div>
+<div class="foot">離場規則（V4：SL10 / BE10 / TRAIL8，intraday stop）：初始止蝕 = 買入價 ×0.90；任何一日最高價 ≥ 買入價 ×1.10 → 保本（止蝕升上買入價，只升唔跌）；入咗保本後每日收市更新 止蝕 = max（止蝕, 持有期最高收市 ×0.92）；任何一日最低價 ≤ 當時止蝕 → 當日以止蝕價成交離場，永久凍結。
+ECL / LIN 嘅狀態直接來自 <a href="history.html" style="color:var(--cy)">紀錄 HIST</a> 嘅 XLB 2026-10-15 V4 訊號輪（官方紀錄每日自動推進）；MAR / TJX 唔喺任何 V4 活躍輪，由本頁獨立用同一規則每日推進（買入日係推斷：當日開市價同實際買入價相差 ≤0.13%）。
+圖表：K線 + SMA50（琥珀線）· 青直線 = 買入日 · 紅色虛線 = 而家止蝕位 · 琥珀直線 = 保本激活日 · 紅直線 = 離場日。
+數據：Yahoo Finance，僅供參考，唔係投資建議。</div>
+</div><script>var HOLDD={"stk":{"ECL":[["2026-07-01",278.33,282.92,277.38,278.37,1231100],["2026-07-02",278.94,283.41,276.09,283.36,1242700],["2026-07-06",284.25,284.25,278.5,283.72,1045500],["2026-07-07",287.04,288.3,281.8,283.08,1301000],["2026-07-08",278.33,278.34,272.21,274.12,1213500],["2026-07-09",273.8,275.4,270.37,273.03,1013000],["2026-07-10",273.64,275.7,272.86,274.31,649600],["2026-07-13",274.07,275.87,269.61,271.85,847500],["2026-07-14",271.42,273.03,269.49,269.75,849300],["2026-07-15",269.4,273.16,268.46,270.25,1037600],["2026-07-16",269.06,275.74,268.68,275.71,1202100],["2026-07-17",277.65,281.2,272.09,272.83,1177000],["2026-07-20",272.68,273.94,266.13,268.65,1147200],["2026-07-21",267.16,268.32,263.22,264.2,1194400],["2026-07-22",266.43,267.37,263.05,266.88,1115600],["2026-07-23",262.87,265.47,261.5,263.14,1224500],["2026-07-24",263.75,268.83,263.2,268.75,1155100],["2026-07-27",269.04,272.29,269.0,271.38,1515300],["2026-07-28",278.0,284.99,275.21,282.9,1889600],["2026-07-29",285.68,285.68,278.88,283.7,1536300],["2026-07-30",282.0,283.77,275.75,279.34,1141400],["2026-07-31",274.4,279.17,272.79,277.63,1656600],["2026-08-03",280.25,281.86,275.72,279.43,1595400],["2026-08-04",278.0,283.73,276.32,283.14,1225900],["2026-08-05",285.0,286.46,282.37,285.47,1309100],["2026-08-06",286.62,288.45,280.73,283.46,1223200],["2026-08-07",282.72,287.71,282.2,285.17,1106700],["2026-08-10",284.25,284.89,281.31,284.4,942900],["2026-08-11",282.79,286.34,281.63,284.63,724900],["2026-08-12",282.47,282.85,277.88,278.43,1204900],["2026-08-13",278.95,279.62,274.53,276.26,874300],["2026-08-14",275.14,276.93,274.3,276.11,767300],["2026-08-17",274.12,277.21,273.33,275.84,2384200],["2026-08-18",276.4,282.15,275.24,280.0,2087600],["2026-08-19",280.35,285.78,279.1,285.62,1555300],["2026-08-20",282.44,286.6,280.33,281.48,1862800],["2026-08-21",281.32,283.65,278.45,281.63,2403400],["2026-08-24",284.06,287.38,283.9,286.98,1683000],["2026-08-25",286.99,290.28,285.0,289.54,1779300],["2026-08-26",290.45,295.33,289.89,290.6,1426700],["2026-08-27",287.38,288.75,284.43,285.91,1384400],["2026-08-28",287.73,289.99,285.16,286.75,732400],["2026-08-31",285.35,286.31,281.33,283.2,1531000],["2026-09-01",282.71,284.21,279.32,280.25,1356500],["2026-09-02",281.68,284.96,278.89,279.9,1383300],["2026-09-03",281.54,283.0,276.15,278.97,929000],["2026-09-04",275.87,280.5,275.25,279.28,1017300],["2026-09-08",277.46,280.51,276.0,278.11,1531700],["2026-09-09",276.0,277.17,272.21,272.21,1051500],["2026-09-10",270.28,272.24,268.52,271.6,1175300],["2026-09-11",274.21,277.55,273.04,276.18,1289100],["2026-09-14",276.56,277.12,273.83,275.51,975800],["2026-09-15",276.4,277.45,272.57,274.6,1008000],["2026-09-16",275.59,278.15,272.25,274.08,1271200],["2026-09-17",276.98,276.98,271.67,271.68,985300],["2026-09-18",269.97,271.64,267.91,269.46,2570200],["2026-09-21",272.1,272.11,267.83,269.98,803700],["2026-09-22",272.84,277.11,271.0,276.22,1204200],["2026-09-23",275.39,277.81,273.66,276.72,1058700],["2026-09-24",276.07,278.14,273.75,275.37,976100],["2026-09-25",276.36,280.66,273.14,279.49,1006100],["2026-09-28",277.57,281.27,277.0,280.23,954100],["2026-09-29",279.2,280.82,276.72,277.87,1107400],["2026-09-30",278.13,278.13,274.58,274.58,1509300],["2026-10-01",272.69,273.6,267.46,271.26,1683200],["2026-10-02",273.31,275.31,271.17,273.7,1225700],["2026-10-05",272.06,279.57,271.0,277.07,940200],["2026-10-06",278.76,282.44,275.8,280.82,1181800],["2026-10-07",279.02,280.08,277.31,278.1,1146400],["2026-10-08",276.52,282.74,276.15,281.69,975000],["2026-10-09",281.69,282.69,279.9,281.83,935000],["2026-10-12",281.0,285.57,278.85,284.3,875000],["2026-10-13",286.31,287.0,283.69,285.66,1150300],["2026-10-14",284.63,288.29,284.37,287.71,1098600],["2026-10-15",292.15,295.95,290.38,290.81,1947600],["2026-10-16",292.28,294.29,286.0,288.89,3400500],["2026-10-19",287.35,290.0,284.12,285.94,1967600],["2026-10-20",285.95,288.61,283.74,288.16,1838500],["2026-10-21",287.92,289.67,285.0,288.09,1400500],["2026-10-22",287.81,292.58,286.94,292.3,1249600],["2026-10-23",290.58,292.28,286.57,288.53,994400],["2026-10-26",288.96,290.84,287.11,288.89,1361600],["2026-10-27",284.16,294.75,283.99,291.27,1570400],["2026-10-28",290.73,293.81,288.24,292.41,898505]],"LIN":[["2026-07-01",525.31,538.95,517.0,533.55,3087500],["2026-07-02",535.45,547.22,532.96,546.64,2275600],["2026-07-06",543.72,544.11,531.2,540.52,2296700],["2026-07-07",546.99,548.2,535.36,538.23,2098200],["2026-07-08",536.12,537.05,526.2,527.67,1619200],["2026-07-09",526.0,527.84,519.01,525.56,1870500],["2026-07-10",525.07,532.71,523.48,529.79,1858100],["2026-07-13",530.92,532.45,521.48,524.06,1628800],["2026-07-14",524.4,531.62,521.0,522.54,2153600],["2026-07-15",518.64,521.11,513.4,514.15,1529700],["2026-07-16",513.24,522.16,510.67,520.74,2046100],["2026-07-17",522.18,527.46,511.7,513.22,2780800],["2026-07-20",513.58,516.5,510.94,512.05,1583600],["2026-07-21",511.9,512.83,502.86,505.03,1777100],["2026-07-22",506.85,510.96,505.1,508.67,1636600],["2026-07-23",503.87,510.92,502.1,506.32,1808400],["2026-07-24",505.45,512.92,504.89,512.28,1327200],["2026-07-27",513.33,515.0,506.47,507.02,1656100],["2026-07-28",512.06,522.0,509.99,511.18,2339600],["2026-07-29",511.78,513.65,505.14,511.17,2030200],["2026-07-30",510.42,514.78,502.62,508.64,2360800],["2026-07-31",474.98,483.95,466.88,478.38,5221600],["2026-08-03",483.07,485.0,476.41,480.46,2806200],["2026-08-04",481.99,485.6,478.5,484.64,2974700],["2026-08-05",490.43,494.73,488.72,491.05,2209600],["2026-08-06",497.93,499.18,489.35,490.11,2062400],["2026-08-07",486.58,493.04,486.2,489.98,1731300],["2026-08-10",489.29,492.58,487.02,492.46,1877600],["2026-08-11",491.04,495.96,489.98,490.53,1332200],["2026-08-12",487.85,490.34,478.75,479.43,2336900],["2026-08-13",479.86,483.29,475.75,478.2,2197600],["2026-08-14",479.09,483.49,477.13,482.74,1365100],["2026-08-17",482.0,482.37,473.05,474.33,1745800],["2026-08-18",481.67,483.48,477.71,478.71,2401000],["2026-08-19",478.49,483.97,478.0,481.13,2847100],["2026-08-20",481.25,489.8,479.37,481.29,1811400],["2026-08-21",486.35,491.77,482.47,487.57,2048400],["2026-08-24",488.44,491.49,485.0,490.03,2184100],["2026-08-25",489.2,490.62,485.12,487.2,1785600],["2026-08-26",488.55,494.5,488.01,490.33,1843200],["2026-08-27",484.57,486.69,481.0,485.35,1899800],["2026-08-28",487.0,489.6,486.7,489.51,1240800],["2026-08-31",489.05,492.49,486.45,489.58,2109600],["2026-09-01",488.5,488.96,482.16,486.76,1641100],["2026-09-02",487.99,490.98,485.52,487.45,1154200],["2026-09-03",487.9,491.98,480.05,482.19,1829300],["2026-09-04",479.25,482.96,476.48,477.57,2273700],["2026-09-08",474.01,474.01,466.0,468.38,2580500],["2026-09-09",468.38,468.38,463.37,466.65,2095700],["2026-09-10",465.41,467.13,460.2,461.62,2149000],["2026-09-11",462.83,467.66,460.69,466.22,1631000],["2026-09-14",467.88,467.88,461.35,464.41,1439300],["2026-09-15",462.19,464.04,459.58,462.96,1641800],["2026-09-16",462.86,466.24,459.77,462.09,1338200],["2026-09-17",461.32,462.96,455.7,458.48,2189000],["2026-09-18",458.38,461.7,454.19,460.4,4475400],["2026-09-21",460.87,461.43,456.41,457.5,2016600],["2026-09-22",458.06,465.95,455.27,464.91,1934200],["2026-09-23",463.83,472.59,463.01,469.72,1925700],["2026-09-24",470.0,472.27,466.4,468.14,2084400],["2026-09-25",465.75,470.44,465.75,469.89,1618600],["2026-09-28",467.38,474.05,465.01,472.04,1868800],["2026-09-29",472.9,477.52,471.4,473.37,1908000],["2026-09-30",476.19,480.56,474.55,474.65,2640100],["2026-10-01",472.0,472.0,462.37,469.45,2124000],["2026-10-02",472.48,483.41,470.55,479.48,2533700],["2026-10-05",480.09,485.94,476.58,482.38,2797700],["2026-10-06",482.87,492.1,482.69,489.95,3161100],["2026-10-07",490.54,490.55,483.69,483.98,1942800],["2026-10-08",484.43,486.67,480.22,481.7,2117300],["2026-10-09",479.05,485.83,479.0,483.73,1590800],["2026-10-12",483.09,490.99,482.51,487.35,1457200],["2026-10-13",491.38,494.13,489.2,492.11,1394100],["2026-10-14",493.58,494.23,489.11,492.7,2484400],["2026-10-15",496.76,499.2,492.88,493.22,2547400],["2026-10-16",492.74,502.14,492.74,498.43,2036700],["2026-10-19",497.97,504.85,497.76,503.44,1724400],["2026-10-20",505.36,506.38,496.68,501.89,1822600],["2026-10-21",497.25,502.18,496.68,500.57,1430200],["2026-10-22",500.85,510.84,500.29,510.36,1956800],["2026-10-23",509.7,512.49,505.29,508.83,1665700],["2026-10-26",508.76,510.93,507.13,507.56,1663500],["2026-10-27",504.56,509.0,504.56,508.65,1710500],["2026-10-28",505.56,509.55,503.51,508.16,1658428]],"MAR":[["2026-07-01",369.95,373.38,365.45,368.32,1669300],["2026-07-02",369.88,374.07,366.97,372.95,1552700],["2026-07-06",373.23,379.9,371.64,379.75,1737700],["2026-07-07",382.15,383.99,380.0,380.75,1494800],["2026-07-08",378.15,378.2,369.73,371.16,1391600],["2026-07-09",371.8,376.01,366.46,372.47,1208000],["2026-07-10",372.82,378.32,372.78,376.11,1028400],["2026-07-13",375.7,378.07,361.73,362.87,1592500],["2026-07-14",360.78,364.14,359.96,363.19,1736800],["2026-07-15",363.61,370.67,363.61,369.05,1110900],["2026-07-16",370.49,376.44,368.33,371.14,1257800],["2026-07-17",371.14,372.98,363.52,366.24,1845500],["2026-07-20",369.81,371.33,364.63,366.93,1064700],["2026-07-21",370.79,372.21,365.05,367.81,1013100],["2026-07-22",367.53,371.4,366.75,369.8,915100],["2026-07-23",363.67,365.92,360.71,364.47,1200300],["2026-07-24",365.58,375.78,364.25,374.43,1231700],["2026-07-27",378.11,384.2,377.53,383.06,1376900],["2026-07-28",382.64,384.23,374.55,383.52,1804600],["2026-07-29",377.25,383.26,375.62,381.12,1542200],["2026-07-30",380.0,380.6,371.09,375.48,1593500],["2026-07-31",377.01,377.93,372.63,372.83,1564300],["2026-08-03",359.44,365.47,344.13,346.83,4419300],["2026-08-04",344.79,346.36,340.81,345.2,3376600],["2026-08-05",348.31,361.83,347.78,361.31,2051400],["2026-08-06",362.01,364.74,356.01,359.67,1677200],["2026-08-07",358.84,359.97,353.46,353.91,2278700],["2026-08-10",350.1,353.36,344.71,348.44,1716600],["2026-08-11",348.97,352.27,347.27,349.49,2390400],["2026-08-12",351.6,356.6,348.88,354.58,1350800],["2026-08-13",356.58,357.61,350.98,352.53,997000],["2026-08-14",350.72,358.1,349.74,356.72,880500],["2026-08-17",353.94,357.98,353.0,356.57,1313100],["2026-08-18",358.35,361.46,355.66,357.33,1505400],["2026-08-19",358.4,365.11,357.18,359.95,1288200],["2026-08-20",356.61,358.75,354.57,356.6,1861800],["2026-08-21",359.02,361.0,354.19,356.39,994500],["2026-08-24",359.37,363.39,357.26,360.2,954600],["2026-08-25",360.61,362.29,357.43,357.77,1436100],["2026-08-26",358.07,360.67,355.07,358.67,2033100],["2026-08-27",354.59,357.93,353.77,353.87,1480700],["2026-08-28",358.16,358.16,350.81,351.08,1011200],["2026-08-31",348.7,350.55,341.14,341.76,1422500],["2026-09-01",340.54,342.49,333.74,334.55,1676100],["2026-09-02",336.04,337.99,332.24,333.14,1266600],["2026-09-03",333.27,337.96,331.14,336.07,1401700],["2026-09-04",334.22,339.3,334.22,336.51,1175500],["2026-09-08",332.08,336.74,328.24,328.79,2107400],["2026-09-09",326.33,332.25,320.91,331.52,2233700],["2026-09-10",330.5,334.12,328.6,329.07,1580400],["2026-09-11",334.28,336.8,330.45,334.69,1502100],["2026-09-14",333.24,341.3,332.04,340.46,1697900],["2026-09-15",339.51,342.31,335.44,337.24,1556700],["2026-09-16",337.59,339.42,332.76,334.97,1228200],["2026-09-17",337.72,338.67,332.68,334.0,1000900],["2026-09-18",333.83,340.64,332.35,338.92,4247800],["2026-09-21",337.51,343.15,337.02,342.66,1166900],["2026-09-22",346.69,349.34,343.15,348.06,1796000],["2026-09-23",346.3,354.11,345.37,351.66,1654600],["2026-09-24",351.2,354.63,349.67,351.51,1105700],["2026-09-25",351.85,353.3,347.6,352.03,1353100],["2026-09-28",351.95,359.63,349.68,358.57,1713300],["2026-09-29",362.35,364.09,355.17,361.62,1466700],["2026-09-30",363.69,363.69,355.67,355.67,1122200],["2026-10-01",357.79,357.79,352.29,354.79,1117800],["2026-10-02",359.32,360.6,356.36,358.96,1000900],["2026-10-05",357.79,358.96,354.69,355.89,1369700],["2026-10-06",357.52,362.46,356.76,361.28,1338000],["2026-10-07",359.23,361.78,355.7,356.5,1270000],["2026-10-08",355.17,363.83,354.62,361.08,996200],["2026-10-09",361.08,366.38,360.12,365.88,834100],["2026-10-12",365.88,370.14,363.8,369.3,853300],["2026-10-13",371.4,372.88,367.0,371.5,755900],["2026-10-14",373.13,373.26,369.1,371.82,1354100],["2026-10-15",376.29,389.18,376.23,385.71,1907300],["2026-10-16",388.71,394.74,387.55,388.05,1913000],["2026-10-19",388.4,392.77,386.0,390.7,1247700],["2026-10-20",393.16,397.72,391.45,397.31,1529600],["2026-10-21",397.49,407.34,396.47,404.0,1638900],["2026-10-22",401.99,403.27,394.18,396.8,2657500],["2026-10-23",392.76,396.83,390.09,390.71,1356700],["2026-10-26",393.5,398.42,392.93,394.75,1165400],["2026-10-27",387.37,391.17,381.04,390.23,1886200],["2026-10-28",389.75,394.76,387.83,394.4,1143000]],"TJX":[["2026-07-01",152.05,152.36,149.71,151.35,5047700],["2026-07-02",151.8,154.26,150.52,154.26,4918800],["2026-07-06",152.99,154.0,149.95,151.31,5758000],["2026-07-07",153.84,155.74,152.47,154.11,5301900],["2026-07-08",154.0,154.12,152.25,152.79,4624800],["2026-07-09",152.75,153.93,150.25,150.9,6048800],["2026-07-10",151.14,151.87,150.25,151.34,4169000],["2026-07-13",152.82,153.94,150.25,150.53,3644900],["2026-07-14",150.25,151.17,148.88,150.34,4990200],["2026-07-15",148.8,151.83,148.27,150.97,6550100],["2026-07-16",152.08,155.27,151.45,154.79,4557500],["2026-07-17",155.0,158.15,153.87,154.46,6184900],["2026-07-20",154.53,156.04,153.82,155.7,4979100],["2026-07-21",155.2,155.37,152.77,155.05,4737200],["2026-07-22",155.79,158.0,154.04,155.41,4887800],["2026-07-23",154.18,155.08,152.4,153.48,3339700],["2026-07-24",152.87,155.35,152.12,154.22,4249500],["2026-07-27",155.97,157.62,155.15,156.38,4309200],["2026-07-28",159.82,161.45,158.35,160.8,5851600],["2026-07-29",159.99,163.04,159.3,161.63,3961300],["2026-07-30",159.99,160.15,157.52,159.26,6297700],["2026-07-31",159.05,159.06,157.1,157.34,3766700],["2026-08-03",159.29,160.49,155.73,157.5,4549800],["2026-08-04",157.13,158.49,155.3,157.55,7351600],["2026-08-05",158.12,160.5,157.83,159.92,6044900],["2026-08-06",161.85,162.12,159.69,162.06,6853800],["2026-08-07",160.46,162.5,159.23,161.36,4722500],["2026-08-10",160.79,160.85,158.23,158.82,4045800],["2026-08-11",157.91,159.0,155.49,155.74,3900400],["2026-08-12",153.64,155.31,152.13,152.61,4344500],["2026-08-13",153.0,154.04,151.43,153.81,5377000],["2026-08-14",153.21,153.57,151.71,152.11,3929800],["2026-08-17",151.0,153.31,150.41,150.85,6908500],["2026-08-18",153.06,153.43,150.85,150.85,6574600],["2026-08-19",144.14,150.54,141.94,144.5,12894900],["2026-08-20",142.21,142.49,139.31,140.69,12330200],["2026-08-21",140.61,141.93,139.59,140.53,9696100],["2026-08-24",141.19,141.19,139.17,140.71,7310000],["2026-08-25",140.92,142.49,139.43,139.48,6069500],["2026-08-26",139.2,139.25,136.74,136.83,10469800],["2026-08-27",135.85,135.9,134.17,134.22,7037900],["2026-08-28",134.75,135.56,133.55,135.12,6800200],["2026-08-31",135.1,135.55,133.08,133.91,11952500],["2026-09-01",134.01,134.68,133.04,133.27,7177700],["2026-09-02",133.36,133.5,131.18,131.31,6998900],["2026-09-03",131.62,132.36,130.15,132.19,7841200],["2026-09-04",131.78,133.11,131.78,132.08,7265600],["2026-09-08",131.26,132.0,128.37,128.92,11170900],["2026-09-09",128.09,128.13,125.81,126.12,8368000],["2026-09-10",126.38,127.08,125.56,126.42,6192600],["2026-09-11",127.12,127.36,124.87,126.02,5933200],["2026-09-14",126.88,127.8,125.79,125.99,7592200],["2026-09-15",126.2,127.03,123.84,124.6,11102000],["2026-09-16",124.95,125.75,122.78,122.84,10337700],["2026-09-17",123.57,126.68,123.26,126.55,13314700],["2026-09-18",126.42,129.47,126.07,127.24,17683900],["2026-09-21",127.73,131.42,127.05,130.96,11408100],["2026-09-22",131.93,132.5,129.91,130.79,10063200],["2026-09-23",130.03,132.23,130.03,131.59,8649600],["2026-09-24",132.37,132.75,130.51,131.63,8133800],["2026-09-25",130.42,130.84,128.57,130.06,8659600],["2026-09-28",129.9,132.19,129.0,130.25,5886200],["2026-09-29",130.84,134.35,129.77,133.8,12018500],["2026-09-30",134.37,134.67,132.01,132.31,7763500],["2026-10-01",132.63,133.73,131.44,133.59,5896100],["2026-10-02",133.98,133.98,132.37,132.68,6951300],["2026-10-05",133.56,136.15,133.34,134.41,9657800],["2026-10-06",134.94,137.24,134.53,137.03,8447400],["2026-10-07",137.44,139.62,137.32,138.8,9588900],["2026-10-08",138.41,139.15,136.52,138.75,8080000],["2026-10-09",138.43,139.46,137.16,138.76,4389700],["2026-10-12",138.5,141.94,138.19,141.92,9121300],["2026-10-13",142.8,144.05,141.04,141.49,7499500],["2026-10-14",142.03,142.91,141.23,142.83,6884700],["2026-10-15",145.29,146.52,143.84,144.58,8959100],["2026-10-16",145.98,147.45,145.67,147.33,8510100],["2026-10-19",146.32,147.7,145.4,147.36,4878600],["2026-10-20",148.42,148.57,146.41,146.99,5892100],["2026-10-21",146.33,147.11,145.36,145.52,3875300],["2026-10-22",145.48,147.69,145.48,147.38,4350700],["2026-10-23",146.7,147.38,144.73,145.06,4857800],["2026-10-26",144.83,146.14,143.62,143.7,4804800],["2026-10-27",142.27,143.0,140.07,140.2,3998300],["2026-10-28",138.98,139.85,138.01,138.39,2982386]]},"cards":{"ECL":["ECL",60,83,[{"date":"2026-10-16","glyph":"入","accent":"#22d3ee","vline":true,"at":"bottom","edge":true,"text":"入 10-16 @ 292.28"}],263.052,null],"LIN":["LIN",60,83,[{"date":"2026-10-16","glyph":"入","accent":"#22d3ee","vline":true,"at":"bottom","edge":true,"text":"入 10-16 @ 492.74"}],443.466,null],"MAR":["MAR",60,83,[{"date":"2026-10-16","glyph":"入","accent":"#22d3ee","vline":true,"at":"bottom","edge":true,"text":"入 10-16 @ 388.62"}],349.758,null],"TJX":["TJX",60,83,[{"date":"2026-10-16","glyph":"入","accent":"#22d3ee","vline":true,"at":"bottom","edge":true,"text":"入 10-16 @ 145.79"}],131.211,null]}};</script><script>function priceFmt(v){if(v==null)return"—";return v>=1000?v.toFixed(0):v>=100?v.toFixed(1):v.toFixed(2)}
+function niceStep(r){var p=Math.pow(10,Math.floor(Math.log10(r)));var m=r/p;return(m<1.5?1:m<3.5?2:m<7.5?5:10)*p}
+function drawPanel(cvs,rows,mode,opts){   /* opts（可選）：{h:圖高, win:顯示日數, tag:SMA50 圖例後加字} —— v3.3 教學頁重用 */
+  opts=opts||{};
+  if(!cvs)return;
+  var W=cvs.clientWidth||cvs.parentElement.clientWidth,
+      H=opts.h||(window.innerWidth<=599?200:340);   /* v5.5：手機一屏兩圖（淨 drill 冇傳 h） */
+  var dpr=window.devicePixelRatio||1;
+  cvs.width=Math.round(W*dpr);cvs.height=Math.round(H*dpr);cvs.style.height=H+"px";
+  var ctx=cvs.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  rows=(rows||[]).filter(function(r){return r&&r[4]!=null});
+  if(rows.length<2){ctx.fillStyle="#7a8494";ctx.font="12px Consolas,Menlo,monospace";ctx.fillText("冇圖表數據",20,30);return}
+  var hasVol=mode==="stock";
+  var padL=54,padR=12,padT=14,padB=26;
+  var volH=hasVol?Math.round((H-padT-padB)*0.22):0;
+  var pBot=H-padB-volH-(hasVol?8:0);
+  /* chart 欄位：[date, open, high, low, close, volume]（fallback / 指數有 null） */
+  var closes=rows.map(function(r){return r[4]});
+  var v0=opts.v0|0,v1=(opts.v1==null?rows.length-1:Math.min(opts.v1,rows.length-1));
+  var closesAll=closes;
+  if(v0>0||v1<rows.length-1){rows=rows.slice(v0,v1+1);closes=closes.slice(v0,v1+1);}
+  /* indexS：先用完整數列計 SMA50（要 50 日暖機），再切最近 120 日顯示（同左圖個股同期） */
+  var sma50=null,bars=null;
+  if(mode==="indexS"){
+    var s50=0;sma50=[];
+    for(var i0=0;i0<closes.length;i0++){
+      s50+=closes[i0];if(i0>=50)s50-=closes[i0-50];
+      sma50.push(i0>=49?s50/50:null);
+    }
+    var preClose=null,win=opts.win||120;
+    /* v3.8：endTrim = 先切走最後 N 支再套用 win（教學幕② zoom 觸發段用）。
+       SMA50 已喺完整數列計好，切尾唔影響線值；冇傳 endTrim 行為完全不變 */
+    var trim=opts.endTrim|0;
+    if(trim>0&&rows.length>trim){
+      rows=rows.slice(0,rows.length-trim);
+      closes=closes.slice(0,rows.length);
+      if(sma50)sma50=sma50.slice(0,rows.length);
+    }
+    /* v5.5：opts.view{off,len}（drill 同步拖動/縮放）—— 取代 win 切窗；
+       SMA50 已喺完整數列計好，切窗唔影響線值；冇傳 view 行為完全不變 */
+    var vwS=opts.view;
+    if(vwS&&vwS.len>0){
+      var vof=Math.max(0,Math.min(rows.length-1,vwS.off|0));
+      var vln=Math.max(2,Math.min(rows.length-vof,vwS.len|0));
+      if(vof>0)preClose=rows[vof-1][4];
+      rows=rows.slice(vof,vof+vln);closes=closes.slice(vof,vof+vln);sma50=sma50.slice(vof,vof+vln);
+    }else if(rows.length>win){
+      var off=rows.length-win;
+      preClose=rows[off-1][4];
+      rows=rows.slice(off);closes=closes.slice(off);sma50=sma50.slice(off);
+    }
+    /* v1.6：K線化 bars —— open 缺 = 上日收（第一格用切走前嗰日收）；
+       high/low 缺 = 開收較大/細值；最後 clamp 返 high≥開收、low≤開收 */
+    bars=rows.map(function(r,i){
+      var c=r[4];
+      var o=r[1]!=null?r[1]:(i>0?rows[i-1][4]:(preClose!=null?preClose:c));
+      var hi=r[2]!=null?r[2]:Math.max(o,c);
+      var lo=r[3]!=null?r[3]:Math.min(o,c);
+      return [r[0],o,Math.max(hi,o,c),Math.min(lo,o,c),c,r[5]];
+    });
+  }
+  /* v4.7：stock 模式都計 SMA50（琥珀，V2.1 個股確認把尺，同 indexS 同色同款）——
+     用切窗前完整數列暖機（history 展開圖 v0/v1 patch 會提供 closesAll/v0），再對返顯示窗；
+     indexS/indexK/indexL 行為完全不變 */
+  var sma50st=null,stWarmGap=false;
+  if(mode==="stock"){
+    var srcA=(typeof closesAll!=="undefined"&&closesAll)?closesAll:closes;
+    var offA=(typeof v0!=="undefined")?(v0|0):0;
+    var runA=0,full50=[];
+    for(var q=0;q<srcA.length;q++){runA+=srcA[q];if(q>=50)runA-=srcA[q-50];full50.push(q>=49?runA/50:null)}
+    sma50st=full50.slice(offA,offA+rows.length);
+    /* v5.5：顯示窗 —— opts.view{off,len}（drill 同步拖動/縮放）或 opts.win（尾 N 日）；
+       冇傳就全段顯示（history 頁 v0/v1 patch 已切好，行為完全不變）。
+       SMA50 已喺完整數列暖機，點切都唔影響線值 */
+    var vw=opts.view,wOff=0,wLen=rows.length;
+    if(vw&&vw.len>0){
+      wOff=Math.max(0,Math.min(rows.length-1,vw.off|0));
+      wLen=Math.max(2,Math.min(rows.length-wOff,vw.len|0));
+    }else if(opts.win&&rows.length>opts.win){
+      wOff=rows.length-opts.win;
+    }
+    if(wOff>0||wLen<rows.length){
+      rows=rows.slice(wOff,wOff+wLen);closes=closes.slice(wOff,wOff+wLen);
+      sma50st=sma50st.slice(wOff,wOff+wLen);
+    }
+    /* 視窗起點暖機未夠（全數列頭 49 日入邊）→ 保留缺口，圖上提示；唔補零唔硬接 */
+    stWarmGap=sma50st.length>0&&sma50st[0]==null;
+  }
+  var his=mode==="indexS"?bars.map(function(r){return r[2]}):rows.map(function(r){return r[2]!=null?r[2]:r[4]});
+  var los=mode==="indexS"?bars.map(function(r){return r[3]}):rows.map(function(r){return r[3]!=null?r[3]:r[4]});
+  var mn=Math.min.apply(null,los),mx=Math.max.apply(null,his);
+  if(opts.annot&&opts.annot.level&&opts.annot.level.price!=null){
+    var _lp=opts.annot.level.price;if(_lp<mn)mn=_lp;if(_lp>mx)mx=_lp;}
+  if(sma50){sma50.forEach(function(v){if(v!=null){if(v<mn)mn=v;if(v>mx)mx=v}})}
+  if(sma50st){sma50st.forEach(function(v){if(v!=null){if(v<mn)mn=v;if(v>mx)mx=v}})}   /* v4.7 stock SMA50 入埋價幅 */
+  if(mx===mn)mx=mn*1.01;
+  var pd=(mx-mn)*0.06;mn-=pd;mx+=pd;
+  var iw=W-padL-padR;
+  var x=function(i){return padL+iw*(i+0.5)/rows.length};
+  var y=function(v){return padT+(pBot-padT)*(1-(v-mn)/(mx-mn))};
+  ctx.font="10px Consolas,Menlo,monospace";ctx.textBaseline="middle";
+  /* 橫格線 + Y 價位 */
+  var step=niceStep((mx-mn)/4);
+  ctx.strokeStyle="#1b2027";ctx.fillStyle="#59626f";ctx.lineWidth=1;
+  for(var v=Math.ceil(mn/step)*step;v<=mx;v+=step){
+    ctx.beginPath();ctx.moveTo(padL,y(v));ctx.lineTo(W-padR,y(v));ctx.stroke();
+    ctx.fillText(priceFmt(v),8,y(v));
+  }
+  /* X 月份標籤 + 直格線（v5.3：標籤最少 30px 間距、貼左軸/右緣唔畫 —— 修左緣重叠） */
+  var lastM="",lastLblX=-999;
+  for(var i=0;i<rows.length;i++){
+    var m=rows[i][0].slice(0,7);
+    if(m!==lastM){
+      lastM=m;
+      ctx.strokeStyle="#14181d";ctx.beginPath();ctx.moveTo(x(i),padT);ctx.lineTo(x(i),H-padB);ctx.stroke();
+      var lx=x(i);
+      if(lx-lastLblX>=30&&lx-8>=padL-4&&lx+16<=W-padR+18){
+        ctx.fillStyle="#707b8c";ctx.fillText(rows[i][0].slice(5,7)+"月",lx-8,H-padB+9);
+        lastLblX=lx;
+      }
+    }
+  }
+  var bw=Math.max(1,iw/rows.length*0.55);
+  /* 成交量柱（綠升紅跌，跟當日 close vs 上日 close）——淨係個股圖有 */
+  if(hasVol){
+    var vmx=0;rows.forEach(function(r){if(r[5]>vmx)vmx=r[5]});if(!vmx)vmx=1;
+    rows.forEach(function(r,i){
+      var up=i>0?r[4]>=rows[i-1][4]:true;
+      ctx.fillStyle=up?"rgba(38,167,105,.6)":"rgba(240,51,75,.6)";
+      var vh=volH*((r[5]||0)/vmx);
+      ctx.fillRect(x(i)-bw/2,H-padB-vh,bw,vh);
+    });
+    ctx.strokeStyle="#1b2027";ctx.beginPath();ctx.moveTo(padL,H-padB);ctx.lineTo(W-padR,H-padB);ctx.stroke();
+  }
+  /* v4.8：舊 20 日灰虛短均線全站退役 —— 成段刪除（用戶唔需要；
+     歷史檔註：佢曾經喺度畀 stock/indexK/indexL 用，v4.8 起一條都唔畫） */
+  /* v4.7：stock 模式 SMA50 琥珀線（同 indexS 同色 #f0a030、同 1.5px 實線）——
+     V2.1 個股確認就係睇「每隻股 vs 佢自己 SMA50」，個股圖淨留呢一把尺。
+     legend 左上角淨寫「— SMA50」 */
+  if(mode==="stock"&&sma50st){
+    ctx.strokeStyle="#f0a030";ctx.lineWidth=1.5;ctx.beginPath();
+    var sst2=false;
+    for(var sj=0;sj<rows.length;sj++){
+      if(sma50st[sj]==null)continue;
+      var spx2=x(sj),spy2=y(sma50st[sj]);
+      if(!sst2){ctx.moveTo(spx2,spy2);sst2=true}else ctx.lineTo(spx2,spy2);
+    }
+    ctx.stroke();ctx.lineWidth=1;
+    ctx.font="10px Consolas,Menlo,monospace";
+    /* legend 左上角；⚡ vline mark 貼左邊嗰陣向右讓位（同 indexS 圖例口徑） */
+    var lgX2=padL+6;
+    if(opts.annot&&opts.annot.marks){
+      for(var vm3=0;vm3<opts.annot.marks.length;vm3++){
+        var mk3=opts.annot.marks[vm3];
+        if(!mk3.vline)continue;
+        for(var vi3=0;vi3<rows.length;vi3++){
+          if(rows[vi3][0]===mk3.date){
+            if(x(vi3)<lgX2+150&&x(vi3)+12>lgX2)lgX2=x(vi3)+12;
+            break;
+          }
+        }
+      }
+    }
+    ctx.fillStyle="#f0a030";ctx.fillText("— SMA50",lgX2,padT+8);
+    if(stWarmGap){
+      var wtx="SMA50 暖機中 · 頭段無線";
+      ctx.fillStyle="#59626f";ctx.font="10px Consolas,Menlo,monospace";
+      ctx.fillText(wtx,Math.max(lgX2+60,W-padR-ctx.measureText(wtx).width),padT+8);
+    }
+  }
+  if(mode==="indexS"&&sma50){
+    /* v3.4 教學標註層（a）：陰影區 —— opts.annot.shade="below"|"above" 先畫；
+       價低於/高於 SMA50 嘅時段，線同價之間填半透明色（直條連排，喺蠟燭同 SMA50 線之下） */
+    var an=opts.annot;
+    if(an&&an.shade){
+      /* v3.5：shade="both" 兩段色 —— 線下冷色 + 線上橙色（colorAbove），同一張圖講「等→坐」 */
+      var stepx=iw/rows.length,
+          cBelow="rgba("+(an.color||"126,142,247")+",0.12)",
+          cAbove="rgba("+(an.colorAbove||"255,140,26")+",0.12)";
+      for(var ai=0;ai<rows.length;ai++){
+        if(sma50[ai]==null)continue;
+        var ddf=closes[ai]-sma50[ai];
+        if(ddf<0&&(an.shade==="below"||an.shade==="both"))ctx.fillStyle=cBelow;
+        else if(ddf>0&&(an.shade==="above"||an.shade==="both"))ctx.fillStyle=cAbove;
+        else continue;
+        var ya=y(closes[ai]),yb=y(sma50[ai]);
+        ctx.fillRect(x(ai)-stepx/2,Math.min(ya,yb),stepx,Math.max(1,Math.abs(yb-ya)));
+      }
+    }
+    /* 最近交叉位：close 同 SMA50 嘅相對符號轉換點 */
+    var cross=-1;
+    for(var ci=1;ci<rows.length;ci++){
+      if(sma50[ci]==null||sma50[ci-1]==null)continue;
+      var d0=closes[ci-1]-sma50[ci-1],d1=closes[ci]-sma50[ci];
+      if((d0<0)!==(d1<0))cross=ci;
+    }
+    if(cross>0){
+      ctx.strokeStyle="rgba(240,160,48,.55)";ctx.setLineDash([3,5]);ctx.beginPath();
+      ctx.moveTo(x(cross),padT);ctx.lineTo(x(cross),pBot);ctx.stroke();ctx.setLineDash([]);
+      /* v3.9：訊號開始日 vline mark 貼近交叉位嗰陣，交叉 label 落一行唔准疊 */
+      var cry=padT+8;
+      if(opts.annot&&opts.annot.marks){
+        for(var vm=0;vm<opts.annot.marks.length;vm++){
+          var mk=opts.annot.marks[vm];
+          if(!mk.vline)continue;
+          for(var vi=0;vi<rows.length;vi++){
+            if(rows[vi][0]===mk.date){
+              if(Math.abs(x(vi)-x(cross))<72)cry=padT+24;
+              break;
+            }
+          }
+        }
+      }
+      ctx.fillStyle="#f0a030";ctx.font="10px Consolas,Menlo,monospace";
+      ctx.fillText("交叉 "+rows[cross][0].slice(5),Math.min(x(cross)+5,W-padR-70),cry);
+    }
+    /* SMA50 琥珀線 */
+    ctx.strokeStyle="#f0a030";ctx.lineWidth=1.5;ctx.beginPath();
+    var sst=false;
+    for(var si=0;si<rows.length;si++){
+      if(sma50[si]==null)continue;
+      var spx=x(si),spy=y(sma50[si]);
+      if(!sst){ctx.moveTo(spx,spy);sst=true}else ctx.lineTo(spx,spy);
+    }
+    ctx.stroke();ctx.lineWidth=1;
+    /* 圖例（v3.9：訊號開始日 vline 貼左邊嗰陣，圖例向右讓位唔准疊 ⚡） */
+    ctx.font="10px Consolas,Menlo,monospace";
+    var lgX=padL+6;
+    if(opts.annot&&opts.annot.marks){
+      for(var vm2=0;vm2<opts.annot.marks.length;vm2++){
+        var mk2=opts.annot.marks[vm2];
+        if(!mk2.vline)continue;
+        for(var vi2=0;vi2<rows.length;vi2++){
+          if(rows[vi2][0]===mk2.date){
+            if(x(vi2)<lgX+110&&x(vi2)+12>lgX)lgX=x(vi2)+12;
+            break;
+          }
+        }
+      }
+    }
+    ctx.fillStyle="#f0a030";ctx.fillText("— SMA50",lgX,padT+8);
+    if(opts.tag){ctx.fillStyle="#8f98a5";
+      ctx.fillText(opts.tag,lgX+8+ctx.measureText("— SMA50").width,padT+8)}
+  }
+  if(mode==="indexL"){
+    /* 指數淨係得 close：青色收市價線 + 光暈 + 最新點 */
+    ctx.strokeStyle="#22d3ee";ctx.lineWidth=1.6;
+    ctx.shadowColor="rgba(34,211,238,.5)";ctx.shadowBlur=6;
+    ctx.beginPath();
+    rows.forEach(function(r,i2){var px=x(i2),py=y(r[4]);if(i2)ctx.lineTo(px,py);else ctx.moveTo(px,py)});
+    ctx.stroke();ctx.shadowBlur=0;ctx.lineWidth=1;
+    var lx=x(rows.length-1),ly=y(closes[rows.length-1]);
+    ctx.fillStyle="#22d3ee";ctx.beginPath();ctx.arc(lx,ly,3,0,6.2832);ctx.fill();
+  }else{
+    /* K 線（綠升紅跌）：影線 high↔low + 實體 open↔close；indexS 用合成 bars，
+       冇 open 嘅舊 fallback 就畫影線 + 收市點 */
+    var crow=mode==="indexS"?bars:rows;
+    crow.forEach(function(r,i){
+      var o=r[1],c=r[4],hi=r[2],lo=r[3];
+      var up=o==null?true:c>=o;
+      var col=up?"#26a769":"#f0334b";
+      var cx=x(i);
+      ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=1;
+      if(hi!=null&&lo!=null){
+        ctx.beginPath();ctx.moveTo(cx,y(hi));ctx.lineTo(cx,y(lo));ctx.stroke();
+      }
+      if(o==null){
+        ctx.beginPath();ctx.arc(cx,y(c),1.8,0,6.2832);ctx.fill();
+      }else{
+        var bt=y(Math.max(o,c)),bb=y(Math.min(o,c));
+        ctx.fillRect(cx-bw/2,bt,bw,Math.max(1,bb-bt));
+      }
+    });
+  }
+  /* v5.2：opts.dimFrom —— 離場日之後嘅區域淡化（灰遮罩 + 左界虛線；V3 已離場股圖用。
+     冇傳完全唔畫，舊行為不變；喺 history 抽取段內 → history 展開圖都有） */
+  if(opts.dimFrom){
+    var dmi=-1;
+    for(var dmj=0;dmj<rows.length;dmj++)if(rows[dmj][0]>=opts.dimFrom){dmi=dmj;break}
+    if(dmi>=0){
+      var dx0=x(dmi)-iw/rows.length/2;
+      ctx.fillStyle="rgba(10,12,14,.55)";
+      ctx.fillRect(dx0,padT,Math.max(0,W-padR-dx0),H-padB-padT);
+      ctx.strokeStyle="rgba(122,132,148,.55)";ctx.setLineDash([3,4]);
+      ctx.beginPath();ctx.moveTo(dx0,padT);ctx.lineTo(dx0,H-padB);ctx.stroke();ctx.setLineDash([]);
+    }
+  }
+  /* v3.4 教學標註層（b）：霓虹 callout —— opts.annot.now（最近價位）/ crossUp / crossDown（交叉位，
+     按方向自動揀）；牌仔 + 虛線引出 + 目標圓點；上/下半區自動避蠟燭，clamp 喺圖框內；
+     drill-down 冇傳 annot 就完全唔畫，預設行為不變 */
+  /* v3.9：tag() 提出嚟共用 —— indexS 教學標註同 stock drill-down marks 都用；
+     冇 annot 就係 null，下邊嘅 annot 區塊唔會行 */
+  var tag=null,accA="#8f98a5";
+  if(opts.annot){
+    accA=opts.annot.accent||"#8f98a5";
+    tag=function(px,py,text,atBottom,ac){
+      if(!text)return;
+      var ac2=ac||accA;
+      ctx.font="10px Consolas,Menlo,monospace";ctx.textBaseline="middle";
+      var tw=ctx.measureText(text).width,bw2=tw+14,bh2=18;
+      var by=atBottom?(pBot-30):((py>(padT+pBot)/2)?(padT+28):(pBot-48));
+      var bx=Math.max(padL+4,Math.min(W-padR-bw2-4,px-bw2/2));
+      by=Math.max(padT+4,Math.min(pBot-bh2-4,by));
+      var ex=Math.max(bx+4,Math.min(bx+bw2-4,px));
+      var ey=py<by?by:(py>by+bh2?by+bh2:Math.max(by,Math.min(by+bh2,py)));
+      ctx.strokeStyle=ac2;ctx.setLineDash([2,3]);ctx.lineWidth=1;
+      ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(px,py);ctx.stroke();ctx.setLineDash([]);
+      ctx.fillStyle="rgba(13,16,20,.92)";ctx.fillRect(bx,by,bw2,bh2);
+      ctx.strokeRect(bx+.5,by+.5,bw2-1,bh2-1);
+      ctx.fillStyle="#d7dde6";ctx.fillText(text,bx+7,by+bh2/2);
+      ctx.fillStyle=ac2;ctx.beginPath();ctx.arc(px,py,2,0,6.2832);ctx.fill();
+    };
+  }
+  if(mode==="indexS"&&sma50&&opts.annot){
+    var an2=opts.annot,acc=an2.accent||"#8f98a5";
+    var cross2=-1;
+    for(var cj=1;cj<rows.length;cj++){
+      if(sma50[cj]==null||sma50[cj-1]==null)continue;
+      var e0=closes[cj-1]-sma50[cj-1],e1=closes[cj]-sma50[cj];
+      if((e0<0)!==(e1<0))cross2=cj;
+    }
+    /* v3.8：annot.level={price,label,label2,chipBelow,color,pivotDate,pivotLabel} ——
+       ChoCH 前擺動高點層：該價位全寬霓虹虛線 + 左側 label chip（label2 有就雙行；
+       chipBelow 放線下，否則線上）；pivotDate 有就喺被升穿嗰支擺動高點蠟燭頂加同色
+       ▼ + 細 label（放 ▼ 左邊同行，讀落「label ▼」；同色 = 視覺連繫）。
+       冇傳 level 完全唔畫，行為不變 */
+    if(an2.level&&an2.level.price!=null){
+      var lv=an2.level,lc=lv.color||acc,lvy=y(lv.price);
+      if(lvy>padT+2&&lvy<pBot-2){
+        ctx.strokeStyle=lc;ctx.lineWidth=1.2;ctx.setLineDash([7,5]);
+        ctx.shadowColor=lc;ctx.shadowBlur=5;
+        ctx.beginPath();ctx.moveTo(padL,lvy);ctx.lineTo(W-padR,lvy);ctx.stroke();
+        ctx.shadowBlur=0;ctx.setLineDash([]);ctx.lineWidth=1;
+        if(lv.label){
+          ctx.font="10px Consolas,Menlo,monospace";ctx.textBaseline="middle";
+          var lns=lv.label2?[lv.label,lv.label2]:[lv.label];
+          var lw2=0;
+          for(var i8=0;i8<lns.length;i8++)lw2=Math.max(lw2,ctx.measureText(lns[i8]).width);
+          lw2+=12;
+          var lh2=lns.length>1?30:16;
+          var lbx=padL+4,lby=lv.chipBelow?(lvy+4):(lvy-lh2-3);
+          lby=Math.max(padT+2,Math.min(pBot-lh2-2,lby));
+          ctx.fillStyle="rgba(13,16,20,.92)";ctx.fillRect(lbx,lby,lw2,lh2);
+          ctx.strokeStyle=lc;ctx.strokeRect(lbx+.5,lby+.5,lw2-1,lh2-1);
+          ctx.fillStyle=lc;
+          for(var i9=0;i9<lns.length;i9++)
+            ctx.fillText(lns[i9],lbx+6,lby+8+i9*14+(lns.length>1?0:lh2/2-8));
+        }
+        if(lv.pivotDate){
+          var pvi=-1;
+          for(var i7=0;i7<rows.length;i7++)if(rows[i7][0]===lv.pivotDate){pvi=i7;break}
+          if(pvi>=0){
+            var ph=(bars&&bars[pvi]&&bars[pvi][2]!=null)?bars[pvi][2]:closes[pvi];
+            var pvx=x(pvi),pvy=Math.max(padT+9,y(ph)-9);
+            ctx.fillStyle=lc;ctx.beginPath();
+            ctx.moveTo(pvx-4.5,pvy-3);ctx.lineTo(pvx+4.5,pvy-3);ctx.lineTo(pvx,pvy+3.5);
+            ctx.closePath();ctx.fill();
+            if(lv.pivotLabel){
+              ctx.font="10px Consolas,Menlo,monospace";
+              var pw=ctx.measureText(lv.pivotLabel).width;
+              var ptx=pvx-8-pw;
+              if(ptx<padL+2)ptx=pvx+8;   /* pivot 太貼左邊就放 ▼ 右側 */
+              ptx=Math.min(ptx,W-padR-pw-2);
+              ctx.fillStyle=lc;ctx.fillText(lv.pivotLabel,ptx,pvy-1);
+            }
+          }
+        }
+      }
+    }
+    if(cross2>0&&(an2.crossUp||an2.crossDown))
+      tag(x(cross2),y(sma50[cross2]),
+          closes[cross2]>=sma50[cross2]?an2.crossUp:an2.crossDown,true);
+    if(an2.now){
+      var li=rows.length-1;
+      tag(x(li),y(closes[li]),an2.now,false);
+    }
+  }
+  /* v6.0：stock 模式都支援 annot.level（V4 股圖而家 SL 價位線）—— 淨抽 level 部分，
+     cross2/now 維持 indexS 專用；冇傳 level 完全唔畫，V3/教學頁行為不變 */
+  if(mode==="stock"&&opts.annot&&opts.annot.level&&opts.annot.level.price!=null){
+    var lvS=opts.annot.level,lcS=lvS.color||accA,lvyS=y(lvS.price);
+    if(lvyS>padT+2&&lvyS<pBot-2){
+      ctx.strokeStyle=lcS;ctx.lineWidth=1.2;ctx.setLineDash([7,5]);
+      ctx.shadowColor=lcS;ctx.shadowBlur=5;
+      ctx.beginPath();ctx.moveTo(padL,lvyS);ctx.lineTo(W-padR,lvyS);ctx.stroke();
+      ctx.shadowBlur=0;ctx.setLineDash([]);ctx.lineWidth=1;
+      if(lvS.label){
+        ctx.font="10px Consolas,Menlo,monospace";ctx.textBaseline="middle";
+        var lnsS=lvS.label2?[lvS.label,lvS.label2]:[lvS.label];
+        var lwS=0;
+        for(var iS=0;iS<lnsS.length;iS++)lwS=Math.max(lwS,ctx.measureText(lnsS[iS]).width);
+        lwS+=12;
+        var lhS=lnsS.length>1?30:16;
+        var lbxS=padL+4,lbyS=lvS.chipBelow?(lvyS+4):(lvyS-lhS-3);
+        lbyS=Math.max(padT+2,Math.min(pBot-lhS-2,lbyS));
+        ctx.fillStyle="rgba(13,16,20,.92)";ctx.fillRect(lbxS,lbyS,lwS,lhS);
+        ctx.strokeStyle=lcS;ctx.strokeRect(lbxS+.5,lbyS+.5,lwS-1,lhS-1);
+        ctx.fillStyle=lcS;
+        for(var iS2=0;iS2<lnsS.length;iS2++)
+          ctx.fillText(lnsS[iS2],lbxS+6,lbyS+8+iS2*14+(lnsS.length>1?0:lhS/2-8));
+      }
+    }
+  }
+  /* v3.9：date marks 擴展到 stock 模式（drill-down 左圖都要訊號開始日線）——
+     marks=[{date, glyph("⚡"/"1"/"2"/"✓"), text, accent, at, vline}]；
+     vline:true 加畫垂直虛線（價位區 padT→pBot，成交量區保持乾淨），glyph 固定喺線頂；
+     冇 vline 嘅舊 marks（教學頁 ⚡/①/✓，glyph 放蠟燭頂）行為完全不變 */
+  if(tag&&((mode==="indexS"&&sma50)||mode==="stock")){
+    (opts.annot.marks||[]).forEach(function(m){
+      var mi=-1;
+      for(var i4=0;i4<rows.length;i4++)if(rows[i4][0]===m.date){mi=i4;break}
+      var edgeC=false;
+      if(mi<0){
+        /* v4.2：m.edge 兼日期新過圖表最後一支（訊號日新過圖表數據，例如引擎已更新
+           但圖表仲係上個交易日）→ 夾去右邊緣畫，label 照寫真日期；
+           冇 flag 嘅舊 marks 維持 miss 即走（教學頁 zoom 窗外拎走靠呢個行為） */
+        if(m.edge&&rows.length&&m.date>rows[rows.length-1][0]){mi=rows.length-1;edgeC=true}
+        else return;
+      }
+      var ac3=m.accent||accA,cx2=x(mi);
+      if(edgeC)cx2=Math.min(x(mi)+iw/rows.length,W-padR-1);   /* 最後一支之後一格位，唔出框 */
+      if(m.vline){
+        ctx.strokeStyle=ac3;ctx.setLineDash([5,4]);ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(cx2,padT);ctx.lineTo(cx2,pBot);ctx.stroke();ctx.setLineDash([]);
+      }
+      if(m.glyph){
+        var gy=padT+10;
+        if(!m.vline){
+          var hi2=(bars&&bars[mi]&&bars[mi][2]!=null)?bars[mi][2]:(rows[mi][2]!=null?rows[mi][2]:closes[mi]);
+          gy=Math.max(padT+10,y(hi2)-12-(m.dy||0));   /* v4.2：dy 向上錯層（①② 相鄰日唔疊）；冇傳=0 行為不變 */
+        }
+        ctx.textBaseline="middle";ctx.textAlign="center";
+        if(/^[0-9]$/.test(m.glyph)){
+          ctx.fillStyle=ac3;ctx.beginPath();ctx.arc(cx2,gy,7,0,6.2832);ctx.fill();
+          ctx.fillStyle="#0d1014";ctx.font="bold 10px Consolas,Menlo,monospace";
+          ctx.fillText(m.glyph,cx2,gy);
+        }else{
+          ctx.font="13px sans-serif";ctx.shadowColor=ac3;ctx.shadowBlur=8;
+          ctx.fillStyle=ac3;ctx.fillText(m.glyph,cx2,gy);ctx.shadowBlur=0;
+        }
+        ctx.textAlign="left";
+      }
+      if(m.text)tag(cx2,y(closes[mi]),m.text,m.at==="bottom",ac3);
+    });
+  }
+}
+
+function holdDrawAll(){
+  var cs=document.querySelectorAll("canvas[data-tk]");
+  for(var i=0;i<cs.length;i++){
+    var cvs=cs[i],tk=cvs.getAttribute("data-tk"),C=HOLDD.cards[tk];
+    if(!C)continue;
+    var opts={h:(window.innerWidth<=599?220:300),v0:C[1],v1:C[2],
+              annot:{accent:"#22d3ee",marks:C[3]||[]}};
+    if(C[4]!=null)opts.annot.level={price:C[4],color:"#f0334b",
+      label:"SL "+priceFmt(C[4]),chipBelow:true};
+    if(C[5])opts.dimFrom=C[5];
+    drawPanel(cvs,HOLDD.stk[tk]||[],"stock",opts);
+  }
+}
+window.addEventListener("load",holdDrawAll);
+window.addEventListener("resize",holdDrawAll);
+</script></body></html>
